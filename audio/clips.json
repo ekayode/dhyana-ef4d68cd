@@ -386,6 +386,526 @@
    "file": "sun-seal.mp3",
    "hash": "78a243870e96",
    "dur": 4.44
+  },
+  "nidra-settle_1": {
+   "file": "nidra-settle_1.mp3",
+   "hash": "bb50a3858de8",
+   "dur": 16.51
+  },
+  "nidra-settle_2": {
+   "file": "nidra-settle_2.mp3",
+   "hash": "939e7147415a",
+   "dur": 10.76
+  },
+  "nidra-settle_3": {
+   "file": "nidra-settle_3.mp3",
+   "hash": "6d48a41cad0e",
+   "dur": 14.68
+  },
+  "nidra-settle_4": {
+   "file": "nidra-settle_4.mp3",
+   "hash": "ceeb36d2eaa3",
+   "dur": 7.24
+  },
+  "nidra-sankalpa": {
+   "file": "nidra-sankalpa.mp3",
+   "hash": "8b12e39c2ad4",
+   "dur": 17.55
+  },
+  "nidra-rot_intro": {
+   "file": "nidra-rot_intro.mp3",
+   "hash": "3e75278e57be",
+   "dur": 9.56
+  },
+  "nidra-rot_1": {
+   "file": "nidra-rot_1.mp3",
+   "hash": "fd9b01faa864",
+   "dur": 11.47
+  },
+  "nidra-rot_2": {
+   "file": "nidra-rot_2.mp3",
+   "hash": "1efeaa4c08c8",
+   "dur": 22.44
+  },
+  "nidra-rot_3": {
+   "file": "nidra-rot_3.mp3",
+   "hash": "0e5a882bf521",
+   "dur": 11.73
+  },
+  "nidra-rot_4": {
+   "file": "nidra-rot_4.mp3",
+   "hash": "cdf14aaed3f5",
+   "dur": 23.17
+  },
+  "nidra-rot_5": {
+   "file": "nidra-rot_5.mp3",
+   "hash": "1b2bac251b22",
+   "dur": 11.81
+  },
+  "nidra-rot_6": {
+   "file": "nidra-rot_6.mp3",
+   "hash": "3abec809b445",
+   "dur": 28.68
+  },
+  "nidra-rot_7": {
+   "file": "nidra-rot_7.mp3",
+   "hash": "1c7f9df8fa9c",
+   "dur": 10.03
+  },
+  "nidra-rot_8": {
+   "file": "nidra-rot_8.mp3",
+   "hash": "896f85189762",
+   "dur": 20.77
+  },
+  "nidra-breath_1": {
+   "file": "nidra-breath_1.mp3",
+   "hash": "7b901e43a1a0",
+   "dur": 10.03
+  },
+  "nidra-breath_2": {
+   "file": "nidra-breath_2.mp3",
+   "hash": "583e06c3d907",
+   "dur": 21.63
+  },
+  "nidra-breath_3": {
+   "file": "nidra-breath_3.mp3",
+   "hash": "8359df114874",
+   "dur": 2.51
+  },
+  "nidra-opp_1": {
+   "file": "nidra-opp_1.mp3",
+   "hash": "bbb761208b5e",
+   "dur": 13.87
+  },
+  "nidra-opp_2": {
+   "file": "nidra-opp_2.mp3",
+   "hash": "ebbeaa01eb80",
+   "dur": 10.19
+  },
+  "nidra-opp_3": {
+   "file": "nidra-opp_3.mp3",
+   "hash": "55d44c7f5c86",
+   "dur": 7.47
+  },
+  "nidra-opp_4": {
+   "file": "nidra-opp_4.mp3",
+   "hash": "7445f32a4ffc",
+   "dur": 8.83
+  },
+  "nidra-opp_5": {
+   "file": "nidra-opp_5.mp3",
+   "hash": "91093dd65879",
+   "dur": 1.88
+  },
+  "nidra-vis_1": {
+   "file": "nidra-vis_1.mp3",
+   "hash": "992c6e72c33b",
+   "dur": 7.63
+  },
+  "nidra-vis_2": {
+   "file": "nidra-vis_2.mp3",
+   "hash": "fb046aab5602",
+   "dur": 13.01
+  },
+  "nidra-vis_3": {
+   "file": "nidra-vis_3.mp3",
+   "hash": "3ab57e63571b",
+   "dur": 15.73
+  },
+  "nidra-vis_4": {
+   "file": "nidra-vis_4.mp3",
+   "hash": "59612e1fc26e",
+   "dur": 8.2
+  },
+  "nidra-sankalpa_2": {
+   "file": "nidra-sankalpa_2.mp3",
+   "hash": "fdbca9fcf0f8",
+   "dur": 10.76
+  },
+  "nidra-return_1": {
+   "file": "nidra-return_1.mp3",
+   "hash": "5275cd774393",
+   "dur": 10.37
+  },
+  "nidra-return_2": {
+   "file": "nidra-return_2.mp3",
+   "hash": "1f92787e1f3c",
+   "dur": 15.49
+  },
+  "nidra-complete": {
+   "file": "nidra-complete.mp3",
+   "hash": "0c07dc6148ac",
+   "dur": 4.21
+  },
+  "kriya-intro": {
+   "file": "kriya-intro.mp3",
+   "hash": "2f33cd279bbd",
+   "dur": 23.88
+  },
+  "kriya-teach": {
+   "file": "kriya-teach.mp3",
+   "hash": "6c6730634125",
+   "dur": 17.95
+  },
+  "kriya-begin": {
+   "file": "kriya-begin.mp3",
+   "hash": "bbf6d1ad3cf7",
+   "dur": 2.43
+  },
+  "kriya-kin": {
+   "file": "kriya-kin.mp3",
+   "hash": "466495e735ab",
+   "dur": 1.8
+  },
+  "kriya-kout": {
+   "file": "kriya-kout.mp3",
+   "hash": "0eeb3bce41de",
+   "dur": 2.04
+  },
+  "kriya-own": {
+   "file": "kriya-own.mp3",
+   "hash": "36a6f74b888f",
+   "dur": 6.92
+  },
+  "kriya-check_1": {
+   "file": "kriya-check_1.mp3",
+   "hash": "1a681ebd1f89",
+   "dur": 12.93
+  },
+  "kriya-check_2": {
+   "file": "kriya-check_2.mp3",
+   "hash": "eb3e791cd9dc",
+   "dur": 11.96
+  },
+  "kriya-check_3": {
+   "file": "kriya-check_3.mp3",
+   "hash": "3c187456f033",
+   "dur": 8.2
+  },
+  "kriya-aaa_intro": {
+   "file": "kriya-aaa_intro.mp3",
+   "hash": "45cdd4315b52",
+   "dur": 17.55
+  },
+  "kriya-n1": {
+   "file": "kriya-n1.mp3",
+   "hash": "339bfe4ccca8",
+   "dur": 0.76
+  },
+  "kriya-n2": {
+   "file": "kriya-n2.mp3",
+   "hash": "bb8570a1887c",
+   "dur": 0.76
+  },
+  "kriya-n3": {
+   "file": "kriya-n3.mp3",
+   "hash": "ef842874e6a6",
+   "dur": 0.84
+  },
+  "kriya-n4": {
+   "file": "kriya-n4.mp3",
+   "hash": "92f5c989eeb2",
+   "dur": 0.91
+  },
+  "kriya-n5": {
+   "file": "kriya-n5.mp3",
+   "hash": "4062bbbf850d",
+   "dur": 0.84
+  },
+  "kriya-n6": {
+   "file": "kriya-n6.mp3",
+   "hash": "98888ebe46d8",
+   "dur": 0.91
+  },
+  "kriya-n7": {
+   "file": "kriya-n7.mp3",
+   "hash": "657e21169b48",
+   "dur": 2.27
+  },
+  "kriya-aaa_short": {
+   "file": "kriya-aaa_short.mp3",
+   "hash": "00a52b50e60d",
+   "dur": 3.71
+  },
+  "kriya-still_intro": {
+   "file": "kriya-still_intro.mp3",
+   "hash": "3531d57929d5",
+   "dur": 15.65
+  },
+  "kriya-still_check": {
+   "file": "kriya-still_check.mp3",
+   "hash": "d07f5dcf0a55",
+   "dur": 6.92
+  },
+  "kriya-close": {
+   "file": "kriya-close.mp3",
+   "hash": "478513487cf8",
+   "dur": 6.53
+  },
+  "kriya-complete": {
+   "file": "kriya-complete.mp3",
+   "hash": "76220cc7ebf0",
+   "dur": 8.44
+  },
+  "metta-arrive": {
+   "file": "metta-arrive.mp3",
+   "hash": "630be353bc93",
+   "dur": 11.47
+  },
+  "metta-self_1": {
+   "file": "metta-self_1.mp3",
+   "hash": "e8549c65f0a2",
+   "dur": 14.99
+  },
+  "metta-self_2": {
+   "file": "metta-self_2.mp3",
+   "hash": "372024c82e05",
+   "dur": 8.2
+  },
+  "metta-self_3": {
+   "file": "metta-self_3.mp3",
+   "hash": "f369dee2fdc5",
+   "dur": 7.55
+  },
+  "metta-wide": {
+   "file": "metta-wide.mp3",
+   "hash": "09df3b586f84",
+   "dur": 14.84
+  },
+  "metta-rest": {
+   "file": "metta-rest.mp3",
+   "hash": "92c35d17cf7b",
+   "dur": 8.83
+  },
+  "metta-close": {
+   "file": "metta-close.mp3",
+   "hash": "16dfa82e6cbf",
+   "dur": 8.12
+  },
+  "metta-complete": {
+   "file": "metta-complete.mp3",
+   "hash": "a6aefdcab549",
+   "dur": 5.25
+  },
+  "metta-d1-focus": {
+   "file": "metta-d1-focus.mp3",
+   "hash": "728f667a6337",
+   "dur": 17.48
+  },
+  "metta-d1-focus_2": {
+   "file": "metta-d1-focus_2.mp3",
+   "hash": "565ff4a6aadd",
+   "dur": 14.68
+  },
+  "metta-d2-focus": {
+   "file": "metta-d2-focus.mp3",
+   "hash": "bc90470848b4",
+   "dur": 18.83
+  },
+  "metta-d2-focus_2": {
+   "file": "metta-d2-focus_2.mp3",
+   "hash": "7cbd713f479a",
+   "dur": 12.28
+  },
+  "metta-d3-focus": {
+   "file": "metta-d3-focus.mp3",
+   "hash": "fd839f71b9c0",
+   "dur": 15.15
+  },
+  "metta-d3-focus_2": {
+   "file": "metta-d3-focus_2.mp3",
+   "hash": "f5f1db76a1f5",
+   "dur": 10.76
+  },
+  "metta-d4-focus": {
+   "file": "metta-d4-focus.mp3",
+   "hash": "c941d6193ebb",
+   "dur": 17.55
+  },
+  "metta-d4-focus_2": {
+   "file": "metta-d4-focus_2.mp3",
+   "hash": "8a20ebd43692",
+   "dur": 11.31
+  },
+  "metta-d5-focus": {
+   "file": "metta-d5-focus.mp3",
+   "hash": "18569d3901c5",
+   "dur": 19.15
+  },
+  "metta-d5-focus_2": {
+   "file": "metta-d5-focus_2.mp3",
+   "hash": "37ff5fea1156",
+   "dur": 14.68
+  },
+  "metta-d6-focus": {
+   "file": "metta-d6-focus.mp3",
+   "hash": "748056533d75",
+   "dur": 18.83
+  },
+  "metta-d6-focus_2": {
+   "file": "metta-d6-focus_2.mp3",
+   "hash": "e644ae1ddff2",
+   "dur": 12.75
+  },
+  "metta-d7-focus": {
+   "file": "metta-d7-focus.mp3",
+   "hash": "5f6a425e0a83",
+   "dur": 21.63
+  },
+  "metta-d7-focus_2": {
+   "file": "metta-d7-focus_2.mp3",
+   "hash": "4111137b20e7",
+   "dur": 15.39
+  },
+  "vipassana-arrive": {
+   "file": "vipassana-arrive.mp3",
+   "hash": "bee9444c402c",
+   "dur": 12.67
+  },
+  "vipassana-anapana_1": {
+   "file": "vipassana-anapana_1.mp3",
+   "hash": "fc1ce68d0f6e",
+   "dur": 14.45
+  },
+  "vipassana-anapana_2": {
+   "file": "vipassana-anapana_2.mp3",
+   "hash": "8de43649d4c2",
+   "dur": 14.45
+  },
+  "vipassana-scan_1": {
+   "file": "vipassana-scan_1.mp3",
+   "hash": "a6c28a27098f",
+   "dur": 15.23
+  },
+  "vipassana-scan_2": {
+   "file": "vipassana-scan_2.mp3",
+   "hash": "fc4f527f615a",
+   "dur": 15.96
+  },
+  "vipassana-scan_3": {
+   "file": "vipassana-scan_3.mp3",
+   "hash": "96d3801560ea",
+   "dur": 12.67
+  },
+  "vipassana-scan_4": {
+   "file": "vipassana-scan_4.mp3",
+   "hash": "401823562e6a",
+   "dur": 10.03
+  },
+  "vipassana-scan_5": {
+   "file": "vipassana-scan_5.mp3",
+   "hash": "85b0003df7c6",
+   "dur": 14.92
+  },
+  "vipassana-equal": {
+   "file": "vipassana-equal.mp3",
+   "hash": "0599051d7127",
+   "dur": 12.2
+  },
+  "vipassana-close": {
+   "file": "vipassana-close.mp3",
+   "hash": "7e956094cd48",
+   "dur": 11.96
+  },
+  "vipassana-complete": {
+   "file": "vipassana-complete.mp3",
+   "hash": "af71afefc0cc",
+   "dur": 6.27
+  },
+  "sohum-arrive": {
+   "file": "sohum-arrive.mp3",
+   "hash": "e133c86827cf",
+   "dur": 11.47
+  },
+  "sohum-teach": {
+   "file": "sohum-teach.mp3",
+   "hash": "d232bbe82bbf",
+   "dur": 14.76
+  },
+  "sohum-so": {
+   "file": "sohum-so.mp3",
+   "hash": "985a6214e859",
+   "dur": 0.99
+  },
+  "sohum-hum": {
+   "file": "sohum-hum.mp3",
+   "hash": "821189eaa8d4",
+   "dur": 0.99
+  },
+  "sohum-own": {
+   "file": "sohum-own.mp3",
+   "hash": "10f8a127e097",
+   "dur": 6.35
+  },
+  "sohum-check_1": {
+   "file": "sohum-check_1.mp3",
+   "hash": "6fd354fb5c59",
+   "dur": 7.16
+  },
+  "sohum-check_2": {
+   "file": "sohum-check_2.mp3",
+   "hash": "fe4677691d95",
+   "dur": 9.72
+  },
+  "sohum-rest": {
+   "file": "sohum-rest.mp3",
+   "hash": "c91ddcfa61cb",
+   "dur": 6.19
+  },
+  "sohum-close": {
+   "file": "sohum-close.mp3",
+   "hash": "c70e46f46f70",
+   "dur": 2.93
+  },
+  "sohum-complete": {
+   "file": "sohum-complete.mp3",
+   "hash": "db5f664b15aa",
+   "dur": 5.88
+  },
+  "trataka-prep": {
+   "file": "trataka-prep.mp3",
+   "hash": "7b5a570eec64",
+   "dur": 15.49
+  },
+  "trataka-gaze_1": {
+   "file": "trataka-gaze_1.mp3",
+   "hash": "88d4a7d3c5d0",
+   "dur": 16.35
+  },
+  "trataka-inner_1": {
+   "file": "trataka-inner_1.mp3",
+   "hash": "300ba67668e6",
+   "dur": 15.07
+  },
+  "trataka-gaze_2": {
+   "file": "trataka-gaze_2.mp3",
+   "hash": "0c1fd5713fa6",
+   "dur": 4.99
+  },
+  "trataka-inner_2": {
+   "file": "trataka-inner_2.mp3",
+   "hash": "e03e0312206b",
+   "dur": 7.63
+  },
+  "trataka-gaze_3": {
+   "file": "trataka-gaze_3.mp3",
+   "hash": "2c1f7885031d",
+   "dur": 7.47
+  },
+  "trataka-inner_3": {
+   "file": "trataka-inner_3.mp3",
+   "hash": "0f125bb42946",
+   "dur": 10.45
+  },
+  "trataka-close": {
+   "file": "trataka-close.mp3",
+   "hash": "3ecf5ef417e7",
+   "dur": 15.57
+  },
+  "trataka-complete": {
+   "file": "trataka-complete.mp3",
+   "hash": "155c3a59131a",
+   "dur": 4.99
   }
  }
 }

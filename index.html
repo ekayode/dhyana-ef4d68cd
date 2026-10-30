@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Seven Pools</title>
-<meta name="description" content="A 12-minute daily chakra sit, one pool for each day of the week.">
+<meta name="description" content="Daily meditation: the seven chakras, Yoga Nidra, Isha Kriya, metta, body scan, So Hum and candle gazing.">
 <meta name="theme-color" content="#eef0f3" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0f1219" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -23,24 +23,27 @@
 
 <div class="wrap">
   <header>
-    <div><div class="eyebrow">Daily sit · 10 minutes of quiet, guided or not</div><h1>Seven Pools</h1></div>
+    <div><div class="eyebrow">Daily sit · guided or not</div><h1>Seven Pools</h1></div>
     <div id="count"></div>
   </header>
 
   <div class="install" id="install"><b>Put this on your home screen.</b> In Safari, tap Share, then <b>Add to Home Screen</b>. It opens full-screen, works offline, and plays sound with the silent switch on.</div>
+
+  <nav class="practices" id="practices" aria-label="Choose a practice"></nav>
 
   <nav class="days" id="days" aria-label="Choose a day"></nav>
 
   <section class="pool">
     <div class="eyebrow" id="poolEyebrow"></div>
     <h2 id="poolTitle"></h2>
-    <dl class="facts">
-      <dt>Where</dt><dd id="fWhere"></dd>
-      <dt>Deals with</dt><dd id="fDeals"></dd>
-      <dt>Blocked by</dt><dd id="fBlock"></dd>
-      <dt>Silent sound</dt><dd id="fBija"></dd>
-    </dl>
+    <dl class="facts" id="facts"></dl>
     <p class="release" id="release"></p>
+  </section>
+
+  <section class="cycle" id="cycle" hidden aria-label="Cycle">
+    <div class="eyebrow">Cycle</div>
+    <div class="toggles" id="cycleChips"></div>
+    <p class="note" id="cycleNote"></p>
   </section>
 
   <section class="clock" aria-label="Session countdown">
@@ -57,6 +60,7 @@
       <button class="chip" id="mGuided" aria-pressed="true">Guided</button>
       <button class="chip" id="mSilent" aria-pressed="false">No guidance</button>
     </div>
+    <div id="lenRow" hidden><div class="eyebrow">Length</div><div class="toggles" id="lenChips"></div></div>
   </section>
 
   <section class="steps">
@@ -80,10 +84,11 @@
     <ul>
       <li>Decide the night before: same spot, same time. In the morning, open the app, read for one minute, press Begin, and set the phone face down.</li>
       <li>You get 10 seconds after Begin to put the phone down and settle. A bell starts the session; three bells end it.</li>
+      <li>Tap the black screen once to pause or end.</li>
       <li>Don't lock the phone during the sit. The screen stays on but black so the timing keeps working. If it locks or you switch apps, the session pauses where you left it.</li>
-      <li>Sit on the cushion by default. Kneel if your hips are tight. Lie down only when tired, and on Fire day swap the pumping breath for slow belly breaths.</li>
-      <li>Sitting again later? Repeat the same day. Tap the black screen once to pause or end.</li>
-      <li>If the intention question brings up something heavy, let it be there and return to the breath. You don't need to solve it on the cushion.</li>
+      <li data-only="chakras">Sit on the cushion by default. Kneel if your hips are tight. Lie down only when tired, and on Fire day swap the pumping breath for slow belly breaths.</li>
+      <li data-only="chakras">Sitting again later? Repeat the same day.</li>
+      <li data-only="chakras">If the intention question brings up something heavy, let it be there and return to the breath. You don't need to solve it on the cushion.</li>
     </ul>
     <div class="teach" id="teach"></div>
     <p class="credit">Voice by <a href="https://elevenlabs.io" target="_blank" rel="noopener">ElevenLabs</a></p>

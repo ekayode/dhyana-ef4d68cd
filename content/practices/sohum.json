@@ -1,0 +1,60 @@
+{
+ "name": "So Hum",
+ "sub": "Mantra on the breath",
+ "title": "<em>So Hum</em>",
+ "short": "So Hum",
+ "c": "#2f8f83",
+ "doneText": "Complete. I am that.",
+ "lede": {
+  "guided": "Press Begin and close your eyes. The guru breathes the mantra with you for about a minute, then leaves you to ten minutes of quiet with two light check-ins. A minute of resting with no mantra at all closes it.",
+  "silent": "No voice. A bell starts it: So on the in-breath, Hum on the out-breath, for ten minutes. Three bells end it."
+ },
+ "defaultCycle": "d21",
+ "cycles": {
+  "d21": {"days": 21, "perDay": 1, "label": "21 days · once a day"},
+  "d40": {"days": 40, "perDay": 1, "label": "40 days · once a day"}
+ },
+ "facts": [
+  ["Sit", "Tall and relaxed. Eyes closed."],
+  ["Breathing in", "Silently hear “So”."],
+  ["Breathing out", "Silently hear “Hum”."],
+  ["Meaning", "“I am that.” You don't have to believe it for it to work."]
+ ],
+ "release": "One of the simplest mantras there is, and one of the oldest. It rides the breath you already have, so there is nothing to keep count of. Over time the mantra softens until only the breath, and the stillness under it, are left.",
+ "guidelines": [
+  "Don't force the breath to match the mantra. Let the mantra match the breath.",
+  "When you notice you've drifted, come back to the next breath. No need to start over.",
+  "Good on days when the mind is busy: it gives the mind one small, pleasant job."
+ ],
+ "guided": [
+  {"key": "arrive", "name": "Arrive", "dur": 40, "lines": [[2, "arrive"]],
+   "read": "Sit tall, close the eyes, let the breath be natural."},
+  {"key": "learn", "name": "The mantra", "dur": 100,
+   "pattern": [["in", 4, "so"], ["out", 5, "hum"]], "guideUntil": 82, "paceUntil": 82,
+   "lines": [[1, "teach"], [82, "own"]],
+   "read": "“So” on the in-breath, “Hum” on the out-breath. The guru breathes it with you for about a minute."},
+  {"key": "sit", "name": "Meditation", "dur": 600, "bell": true,
+   "every": {"from": 200, "step": 200, "keys": ["check_1", "check_2"], "endGap": 120},
+   "read": "Ten minutes with the mantra on the breath. Two light check-ins from the guru."},
+  {"key": "rest", "name": "Resting", "dur": 60, "bell": true, "lines": [[3, "rest"]],
+   "read": "Let go of the mantra completely and sit in what's left."},
+  {"key": "close", "name": "Close", "dur": 20, "lines": [[1, "close"]],
+   "read": "Gently open the eyes."}
+ ],
+ "silent": [
+  {"key": "sit", "name": "Meditation", "dur": 600,
+   "read": "A bell starts it. “So” on the in-breath, “Hum” on the out-breath. Three bells end it."}
+ ],
+ "say": {
+  "arrive": "Today... So Hum. Sit tall... close the eyes. Let the breath be natural... it has been doing this all your life without your help.",
+  "teach": "So Hum... an old mantra. It means... I am that. You don't say it... you listen for it in the breath. Breathing in... So. Breathing out... Hum.",
+  "so": "So...",
+  "hum": "Hum...",
+  "own": "Now... let the breath and the mantra carry on by themselves. I will be quiet.",
+  "check_1": "If you notice you have drifted... no fuss. Find the next breath... So... Hum.",
+  "check_2": "Let the mantra become softer... and softer... until it is almost just the breath. Almost... nothing.",
+  "rest": "Now let the mantra go completely. Just sit... in what is left.",
+  "close": "Gently... open the eyes.",
+  "complete": "Well done. So Hum. You are that... whatever that is today."
+ }
+}

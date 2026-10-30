@@ -1,0 +1,64 @@
+{
+ "name": "Metta",
+ "sub": "Loving-kindness, a new circle each day",
+ "title": "<em>Metta</em> · loving-kindness",
+ "short": "Metta",
+ "c": "#c25a86",
+ "doneText": "Complete. Take a little of it with you.",
+ "lede": {
+  "guided": "Read today's circle above, press Begin, and close your eyes. The guru starts with you, moves to today's person, then widens the circle to everyone. The phrases are simple; the feeling doesn't have to be big.",
+  "silent": "No voice. A bell starts the sit: offer the four phrases to yourself, then to today's person, then to everyone, at your own pace. Three bells end it."
+ },
+ "defaultCycle": "d7",
+ "cycles": {
+  "d7": {"days": 7, "perDay": 1, "label": "7 days · once a day"},
+  "d21": {"days": 21, "perDay": 1, "label": "21 days · three rounds"}
+ },
+ "cycleNote": "Each day of the cycle has its own person. The day count goes up each day you sit; a missed day doesn't reset it.",
+ "facts": [
+  ["Sit", "However is comfortable. A hand on the heart can help."],
+  ["The phrases", "May you be safe. May you be happy. May you be healthy. May you live with ease."],
+  ["The aim", "To offer goodwill, not to force a feeling. Dry days count too."]
+ ],
+ "release": "Metta trains the heart the way breath practice trains attention: by repetition. The circle widens a little each day, from yourself to someone difficult, and finally to everyone.",
+ "guidelines": [
+  "Feeling nothing is normal. Keep offering the phrases; the feeling tends to follow later.",
+  "On the difficult-person day, choose someone mildly difficult, not the hardest person in your life.",
+  "If strong emotions come up, go back to offering kindness to yourself."
+ ],
+ "days": [
+  {"label": "Yourself as a child", "who": "yourself as a child, then as you are now", "say": {"focus": "Today... we stay with you. Picture yourself as a small child... the one who didn't yet know how to worry. Offer that child... May you be safe. May you be happy. May you be healthy. May you live with ease.", "focus_2": "Now... yourself as you are today. Same wishes... same child, just taller. May I be safe... May I be happy... May I be healthy... May I live with ease."}},
+  {"label": "Someone who helped you", "who": "someone who has helped you", "say": {"focus": "Now... bring to mind someone who has helped you. A teacher... a mentor... someone kind at the right moment. See their face. And offer... May you be safe. May you be happy. May you be healthy. May you live with ease.", "focus_2": "Notice how easy it is... to wish them well. Stay with them. May you be safe... May you be happy... May you be healthy... May you live with ease."}},
+  {"label": "A good friend", "who": "a good friend", "say": {"focus": "Now... a good friend. Someone whose good news makes you happy. Picture them laughing. And offer... May you be safe. May you be happy. May you be healthy. May you live with ease.", "focus_2": "Let the wishes be warm... not polite. May you be safe... May you be happy... May you be healthy... May you live with ease."}},
+  {"label": "Someone neutral", "who": "someone you barely know", "say": {"focus": "Now... someone you barely know. The person at the shop... a neighbour you nod to. You don't know their story... but they have one. And offer... May you be safe. May you be happy. May you be healthy. May you live with ease.", "focus_2": "They want to be happy... exactly as much as you do. May you be safe... May you be happy... May you be healthy... May you live with ease."}},
+  {"label": "Someone difficult", "who": "someone mildly difficult", "say": {"focus": "Now... someone a little difficult. Not the hardest person in your life... let us not be heroes on day five. Picture them... and offer, as best you can... May you be safe. May you be happy. May you be healthy. May you live with ease.", "focus_2": "If the heart says no... that is fine. Offer it anyway... the way you water a plant you don't like. May you be safe... May you be happy... May you be healthy... May you live with ease."}},
+  {"label": "Everyone around you", "who": "the people around you", "say": {"focus": "Now... everyone in this building. Then this street... this neighbourhood... this city. All of them, waking, working, worrying. And offer... May you be safe. May you be happy. May you be healthy. May you live with ease.", "focus_2": "So many people... each one, the centre of their own world. May you be safe... May you be happy... May you be healthy... May you live with ease."}},
+  {"label": "All beings", "who": "all beings everywhere", "say": {"focus": "Now... all beings, everywhere. People... animals... the ones you love... the ones you'll never meet. No one left out. May all beings be safe. May all beings be happy. May all beings be healthy. May all beings live with ease.", "focus_2": "The whole world... held in a few simple words. May all beings be safe... May all beings be happy... May all beings be healthy... May all beings live with ease."}}
+ ],
+ "guided": [
+  {"key": "arrive", "name": "Arrive", "dur": 40, "lines": [[2, "arrive"]],
+   "read": "Sit comfortably and soften the face. A hand on the heart, if you like."},
+  {"key": "self", "name": "Yourself", "dur": 180, "lines": [[1, "self_1"], [80, "self_2"], [140, "self_3"]],
+   "read": "The four phrases, offered to yourself: may I be safe, happy, healthy, and live with ease."},
+  {"key": "focus", "name": "Today: {label}", "dur": 300, "lines": [[1, "focus"], [150, "focus_2"]],
+   "read": "The same four phrases, offered to {who}. Repeat them quietly at your own pace."},
+  {"key": "wide", "name": "Widening", "dur": 270, "bell": true, "lines": [[3, "wide"], ["55%", "rest"]],
+   "read": "The circle widens to everyone. Then the words fall away, and you rest in whatever feeling is there."},
+  {"key": "close", "name": "Close", "dur": 30, "bell": true, "lines": [[3, "close"]],
+   "read": "Gently come back."}
+ ],
+ "silent": [
+  {"key": "sit", "name": "Loving-kindness", "dur": 720,
+   "read": "Yourself, then {who}, then everyone: may you be safe, happy, healthy, and live with ease. At your own pace."}
+ ],
+ "say": {
+  "arrive": "Today... metta. Loving-kindness. Sit comfortably... soften the face. Place a hand on the heart... if you like. It's warmer there.",
+  "self_1": "Begin with yourself. Picture yourself... as you are right now. And silently offer... May I be safe. May I be happy. May I be healthy. May I live with ease.",
+  "self_2": "If it feels awkward... that is normal. Most people find it easier to love their dog. Keep going anyway.",
+  "self_3": "May I be safe... May I be happy... May I be healthy... May I live with ease.",
+  "wide": "Now let the circle widen... to everyone in this building... this street... this city... this whole world. May all beings be safe... happy... healthy... at ease.",
+  "rest": "Now let the words go. Rest in the feeling... whatever is there. Even a small warmth... is plenty.",
+  "close": "Gently... come back. Take a little of this kindness with you. You will meet someone today who needs it.",
+  "complete": "Well done. The world is very slightly kinder now. I checked."
+ }
+}

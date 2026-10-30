@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Records every spoken line in content/days.json with an ElevenLabs voice, into audio/.
+// Records every spoken line in content/days.json and content/practices/*.json with an ElevenLabs voice, into audio/.
 //
 //   node tools/voice.mjs key                 save your ElevenLabs API key (hidden input, stored outside the project)
 //   node tools/voice.mjs voices              list the voices on your account; ★ marks calm / soft ones
@@ -76,6 +76,12 @@ function allLines() {
   const lines = {};
   for (const [k, text] of Object.entries(data.common)) lines["common-" + k] = text;
   for (const d of data.days) for (const [k, text] of Object.entries(d.say)) lines[`${d.short.toLowerCase()}-${k}`] = text;
+  const ids = JSON.parse(readFileSync(join(ROOT, "content", "practices.json"), "utf8"));
+  for (const id of ids) {
+    const p = JSON.parse(readFileSync(join(ROOT, "content", "practices", id + ".json"), "utf8"));
+    for (const [k, text] of Object.entries(p.say)) lines[`${id}-${k}`] = text;
+    (p.days || []).forEach((d, i) => { for (const [k, text] of Object.entries(d.say || {})) lines[`${id}-d${i + 1}-${k}`] = text; });
+  }
   return lines;
 }
 

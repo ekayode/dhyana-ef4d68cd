@@ -1,13 +1,16 @@
-/* Seven Pools: screens, timing and audio. Content comes from content/days.json; recorded voice from audio/clips.json. */
+/* Seven Pools: screens, timing and audio.
+   Practices: the seven chakras (content/days.json, one pool per weekday) plus the practices listed in content/practices.json,
+   each described entirely by its own file in content/practices/. Recorded voice from audio/clips.json. */
 const $=id=>document.getElementById(id);
-let DATA=null, DAYS=[], SETTLE=10, todayIdx=0, CLIPS=null;
+let DATA=null, DAYS=[], SETTLE=10, todayIdx=0, CLIPS=null, PR={}, ORDER=[], pday=null;
 let cur=0, segs=[], segI=-1, segElapsed=0, running=false, inSession=false, done=false, last=0, timer=null, wake=null, ctx=null, lastPhase=-1, tickAcc=0;
-const prefs={voice:true,tones:true,mode:"guided"}; // mode: guided | silent
+const prefs={voice:true,tones:true,mode:"guided",practice:"chakras",len:{}}; // mode: guided | silent; len: chosen length per practice
 try{const p=JSON.parse(localStorage.getItem("sp-prefs")||"{}");Object.assign(prefs,p)}catch(e){}
 const canSpeak="speechSynthesis" in window;
 const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+const P=()=>PR[prefs.practice]||null; // the current practice file; null means the seven chakras
 
-// The five steps of every sit. All the teaching comes first; then a long silent meditation and a short seal.
+// The five steps of every chakra sit. All the teaching comes first; then a long silent meditation and a short seal.
 // lines: [seconds into the step, ...keys] — the keys are spoken one after another from that point.
 function SEGS(d){
   const T=DATA.timeline,G=DATA.guideSeconds||12;
@@ -28,13 +31,47 @@ function SILENT(d){
   return [{key:"sit",name:"Meditation",dur:DATA.timeline.meditation,lines:DATA.checkins.map((s,k)=>[s,"checkin_"+(k+1)]),q:true,read:d.ask,
     pre:`Silence. A bell begins the sit, the guru checks in briefly at ${DATA.checkins.map(s=>fmt(s)).join(" and ")} on the breath, the pool and this question, and three bells end it.`}];
 }
-const guided=()=>prefs.mode!=="silent";
 const LEDE={
   guided:"Take a minute with it. Once you press Begin, you won't need to look again. All the guidance comes first, in about two minutes: your intention, the breath, and the pool. Then ten minutes of quiet, where the guru checks in briefly every few minutes, and a short seal.",
   silent:"No guidance up front. Once you press Begin, you get ten seconds to settle, then the meditation starts straight away. Read the pool above and the question below first: the guru will check in on them twice."
 };
-const minLabel=s=>{const m=s/60;return (Number.isInteger(m)?m:Math.floor(m)+(m%1>=.5?"½":""))+" min"};
 
+/* ---------- practices from content files ---------- */
+// A step's dur is seconds, or the name of a value in the chosen length. A line's time is seconds, negative (from the end) or "50%".
+// every: {from, step, keys, endGap} adds check-ins at a steady interval, cycling through keys.
+const lenVars=p=>p.lengths?(p.lengths[prefs.len[p.id]]||Object.values(p.lengths)[0]):{};
+function build(p,list,vars=lenVars(p)){
+  const day=pday!=null?p.days[pday]:{};
+  const fill=t=>t&&t.replace(/\{(\w+)\}/g,(m,k)=>day[k]!=null?day[k]:m);
+  return list.map(s=>{
+    const dur=typeof s.dur==="string"?vars[s.dur]:s.dur;
+    const at=t=>typeof t==="string"?Math.round(dur*parseFloat(t)/100):t<0?dur+t:t;
+    const lines=(s.lines||[]).map(([t,...k])=>[at(t),...k]);
+    if(s.every){const e=s.every;for(let t=e.from,k=0;t<=dur-(e.endGap||60);t+=e.step,k++)lines.push([t,e.keys[k%e.keys.length]])}
+    lines.sort((a,b)=>a[0]-b[0]);
+    return {...s,dur,lines,name:fill(s.name),read:fill(s.read),
+      guideUntil:s.guideUntil!=null?at(s.guideUntil):undefined,paceUntil:s.paceUntil!=null?at(s.paceUntil):undefined};
+  });
+}
+const hasSilent=()=>{const p=P();return p?!!p.silent:true};
+const guided=()=>prefs.mode!=="silent"||!hasSilent();
+
+// Progress through a practice's cycle: a log of sits per date. "Day" counts the days you have sat, so a missed day never resets it.
+const progKey=p=>"sp-prog-"+p.id;
+function progLoad(p){try{return JSON.parse(localStorage.getItem(progKey(p))||"{}")}catch(e){return {}}}
+function progSave(p,s){try{localStorage.setItem(progKey(p),JSON.stringify(s))}catch(e){}}
+function progress(p){
+  const s=progLoad(p),id=p.cycles[s.cycle]?s.cycle:p.defaultCycle,c=p.cycles[id],log=s.log||{},today=log[dateKey()]||0;
+  const sat=Object.keys(log).length,full=Object.values(log).filter(n=>n>=c.perDay).length,day=sat+(today?0:1);
+  const complete=full>=c.days;
+  const status=c.perDay>1?` · ${Math.min(today,c.perDay)} of ${c.perDay} sits today`:today?" · done today":"";
+  return {id,c,day,today,complete,dayIndex:p.days?(day-1)%p.days.length:null,
+    label:complete?`Cycle complete · ${c.days} days`:`Day ${Math.min(day,c.days)} of ${c.days}${status}`,
+    short:complete?"Cycle complete":`Day ${Math.min(day,c.days)} of ${c.days}`};
+}
+function logSit(p){const s=progLoad(p),k=dateKey();s.cycle=s.cycle||p.defaultCycle;s.log=s.log||{};s.log[k]=(s.log[k]||0)+1;progSave(p,s)}
+
+const minLabel=s=>{const m=s/60;return (Number.isInteger(m)?m:Math.floor(m)+(m%1>=.5?"½":""))+" min"};
 function dateKey(){const n=new Date();return n.getFullYear()+"-"+(n.getMonth()+1)+"-"+n.getDate()}
 function readCount(){try{return +(localStorage.getItem("sp-"+dateKey())||0)}catch(e){return 0}}
 function addCount(){try{localStorage.setItem("sp-"+dateKey(),readCount()+1)}catch(e){} showCount()}
@@ -43,23 +80,54 @@ function savePrefs(){try{localStorage.setItem("sp-prefs",JSON.stringify(prefs))}
 function syncToggles(){const can=!!CLIPS||canSpeak;$("tVoice").setAttribute("aria-pressed",prefs.voice&&can);$("tTones").setAttribute("aria-pressed",prefs.tones);
   if(!can){$("tVoice").disabled=true;$("voiceNote").textContent="Voice guidance isn't available on this device. You'll get bells and breath tones only."}}
 const fmtDur=s=>s<60?`${s} sec`:s%60?`${Math.floor(s/60)} min ${s%60} sec`:`${s/60} min`;
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]);
 
+/* ---------- screens ---------- */
+function renderPractices(){
+  const all=[{id:"chakras",name:"Seven chakras",sub:"A pool for each weekday",c:"#c2413a"},...ORDER.map(id=>PR[id])];
+  $("practices").innerHTML=all.map(p=>`<button class="prac" style="--c:${p.c}" data-id="${p.id}" aria-pressed="${prefs.practice===p.id}"><span>${esc(p.name)}</span><small>${esc(p.sub)}</small></button>`).join("");
+}
 function renderDays(){
   $("days").innerHTML=DAYS.map((d,i)=>`<button class="day${i===todayIdx?" today":""}" style="--c:${d.c}" aria-pressed="${i===cur}" data-i="${i}"><small>${d.short}</small><i class="dot"></i><span>${d.el}</span></button>`).join("");
 }
-function selectDay(i){
-  cur=i;const d=DAYS[i];document.documentElement.style.setProperty("--chakra",d.c);renderDays();
-  $("poolEyebrow").textContent=`${i===todayIdx?"Today · ":""}${d.short} · ${d.skt}`;
-  $("poolTitle").innerHTML=`The <em>${d.el}</em> pool`;
-  $("fWhere").textContent=d.where;$("fDeals").textContent=d.deals;$("fBlock").textContent=d.block;$("fBija").textContent=d.bija;
-  $("release").textContent=d.release;
-  $("teach").innerHTML=`<b>If you teach this</b>${d.teach}`;
-  $("barNote").textContent=`${d.el} · ${d.where.split(",")[0]}`;
-  segs=guided()?SEGS(d):SILENT(d);done=false;drawClock();
+const facts=rows=>$("facts").innerHTML=rows.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
+function selectDay(i){cur=i;render()}
+function render(){
+  const p=P();
+  $("days").hidden=!!p;$("cycle").hidden=!p;$("lenRow").hidden=!(p&&p.lengths);
+  document.querySelectorAll("[data-only]").forEach(el=>el.hidden=el.dataset.only!==(p?"other":"chakras"));
+  renderPractices();
+  let full,quiet,lede;
+  if(p){
+    const pr=progress(p);pday=pr.dayIndex;const day=pday!=null?p.days[pday]:null;
+    document.documentElement.style.setProperty("--chakra",p.c);
+    $("poolEyebrow").textContent=pr.label+(day?` · ${day.label}`:"");
+    $("poolTitle").innerHTML=p.title;
+    facts(p.facts);$("release").textContent=(day&&day.release)||p.release;
+    $("teach").innerHTML=`<b>Guidelines</b><ul>${p.guidelines.map(g=>`<li>${g}</li>`).join("")}</ul>`;
+    $("barNote").textContent=`${p.short} · ${pr.short}`;
+    $("cycleChips").innerHTML=Object.entries(p.cycles).map(([id,c])=>`<button class="chip" data-cycle="${id}" aria-pressed="${pr.id===id}">${esc(c.label)}</button>`).join("")
+      +`<button class="chip" id="restart">Start over</button>`;
+    $("cycleNote").textContent=p.cycleNote||"The day count goes up each day you sit; a missed day doesn't reset it.";
+    if(p.lengths)$("lenChips").innerHTML=Object.entries(p.lengths).map(([id,L])=>
+      `<button class="chip" data-len="${id}" aria-pressed="${lenVars(p)===L}">${esc(L.label)} · ${minLabel(build(p,p.guided,L).reduce((a,s)=>a+s.dur,0))}</button>`).join("");
+    full=build(p,p.guided);quiet=p.silent?build(p,p.silent):null;lede=p.lede;
+  }else{
+    pday=null;const d=DAYS[cur];document.documentElement.style.setProperty("--chakra",d.c);renderDays();
+    $("poolEyebrow").textContent=`${cur===todayIdx?"Today · ":""}${d.short} · ${d.skt}`;
+    $("poolTitle").innerHTML=`The <em>${d.el}</em> pool`;
+    facts([["Where",d.where],["Deals with",d.deals],["Blocked by",d.block],["Silent sound",d.bija]]);
+    $("release").textContent=d.release;
+    $("teach").innerHTML=`<b>If you teach this</b>${d.teach}`;
+    $("barNote").textContent=`${d.el} · ${d.where.split(",")[0]}`;
+    full=SEGS(d);quiet=SILENT(d);lede=LEDE;
+  }
+  segs=guided()?full:quiet;done=false;drawClock();
   $("mGuided").setAttribute("aria-pressed",guided());$("mSilent").setAttribute("aria-pressed",!guided());
-  $("mGuided").textContent=`Guided · ${minLabel(SEGS(d).reduce((a,s)=>a+s.dur,0))}`;$("mSilent").textContent=`No guidance · ${minLabel(DATA.timeline.meditation)}`;
-  $("lede").textContent=LEDE[prefs.mode]||LEDE.guided;$("begin").textContent=`Begin · ${minLabel(total())}`;
-  $("steps").innerHTML=segs.map((s,k)=>`<li><span class="n">${k+1}</span><span class="t">${s.name}</span><span class="m">${fmtDur(s.dur)}</span>${s.q?`<span class="d">${s.pre}</span><span class="q">“${s.read}”</span><span class="hear">Hold it lightly as your intention for the sit.</span>`:`<span class="d">${s.read}</span>`}</li>`).join("");
+  $("mGuided").textContent=`Guided · ${minLabel(full.reduce((a,s)=>a+s.dur,0))}`;
+  $("mSilent").hidden=!quiet;if(quiet)$("mSilent").textContent=`No guidance · ${minLabel(quiet.reduce((a,s)=>a+s.dur,0))}`;
+  $("lede").textContent=guided()?lede.guided:lede.silent;$("begin").textContent=`Begin · ${minLabel(total())}`;
+  $("steps").innerHTML=segs.map((s,k)=>`<li><span class="n">${k+1}</span><span class="t">${esc(s.name)}</span><span class="m">${fmtDur(s.dur)}</span>${s.q?`<span class="d">${s.pre}</span><span class="q">“${s.read}”</span><span class="hear">Hold it lightly as your intention for the sit.</span>`:`<span class="d">${s.read}</span>`}</li>`).join("");
 }
 
 /* ---------- countdown ---------- */
@@ -70,7 +138,7 @@ function timeLeft(){if(!inSession)return done?0:total();if(segI<0)return total()
   let r=segs[segI].dur-segElapsed;for(let k=segI+1;k<segs.length;k++)r+=segs[k].dur;return r}
 function drawClock(){
   const l=timeLeft(),t=fmt(l);let now;
-  if(!inSession)now=done?"Complete. Carry the seal with you.":`Ready · ${segs.length} step${segs.length>1?"s":""}`;
+  if(!inSession)now=done?(P()?P().doneText:"Complete. Carry the seal with you."):`Ready · ${segs.length} step${segs.length>1?"s":""}`;
   else if(segI<0)now=`Settling · starts in ${fmt(SETTLE-segElapsed)}`;
   else now=`${segs[segI].name} · ${fmt(segs[segI].dur-segElapsed)} left`;
   const sub=inSession&&segI>=0?`Step ${segI+1} of ${segs.length} · ${now}`:now;
@@ -87,10 +155,10 @@ function ac(){try{ctx=ctx||new (window.AudioContext||window.webkitAudioContext)(
 // After the phone locks or the app is left, iOS can leave the audio context "interrupted" and silent.
 // Called from a tap (Resume), so a fresh context is allowed to start; decoded recordings work in it as-is.
 function wakeAudio(){try{if(ctx&&ctx.state!=="running"){ctx.close().catch(()=>{});ctx=null}}catch(e){ctx=null}return ac()}
-function bell(n=1,delay=0,vol=1){const c=ac();if(!c)return;
+function bell(n=1,delay=0){const c=ac();if(!c)return;
   for(let r=0;r<n;r++){const t0=c.currentTime+delay+r*1.6;
     [[220,.2],[330,.08],[607,.05]].forEach(([f,v])=>{const o=c.createOscillator(),g=c.createGain();o.type="sine";o.frequency.value=f;
-      g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(v*vol,t0+.02);g.gain.exponentialRampToValueAtTime(.0001,t0+4.5);
+      g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(v,t0+.02);g.gain.exponentialRampToValueAtTime(.0001,t0+4.5);
       o.connect(g).connect(c.destination);o.start(t0);o.stop(t0+4.6)})}}
 function tone(type,dur){ // inhale rises, exhale falls; holds are silent
   if(!prefs.tones)return;const c=ac();if(!c)return;const t0=c.currentTime;
@@ -103,15 +171,23 @@ function tone(type,dur){ // inhale rises, exhale falls; holds are silent
 
 /* ---------- audio: the voice ---------- */
 // Each spoken line is a recording (audio/<id>.mp3). Until recordings exist, the device's own voice reads the same text.
+// Ids: common-<key>, <weekday>-<key> for the chakras, <practice>-<key>, and <practice>-d<n>-<key> for a day of a practice's cycle.
 const GAP=1.8; // seconds of quiet between consecutive lines
 const buffers={}, voiceQ=[];
 let speaking=false, gapTimer=null, curSrc=null, rot={in:0,out:0};
 function clipId(key,d=DAYS[cur]){
+  const p=P();
+  if(p){const day=pday!=null&&p.days[pday].say;
+    if(day&&day[key]!=null)return `${p.id}-d${pday+1}-${key}`;return p.say[key]!=null?`${p.id}-${key}`:"common-"+key}
   if(key==="in"||key==="out"){const k=`${key}_${"abc"[rot[key]++%3]}`;return "common-"+k}
   return d.say[key]!=null?`${d.short.toLowerCase()}-${key}`:"common-"+key}
-function clipText(id){const [p,...rest]=id.split("-"),key=rest.join("-");
-  if(p==="common")return DATA.common[key];const d=DAYS.find(x=>x.short.toLowerCase()===p);return d&&d.say[key]}
-function dayClipIds(d){return [...Object.keys(DATA.common).map(k=>"common-"+k),...Object.keys(d.say).map(k=>`${d.short.toLowerCase()}-${k}`)]}
+function clipText(id){const [pfx,...rest]=id.split("-"),key=rest.join("-");
+  if(pfx==="common")return DATA.common[key];
+  const p=PR[pfx];if(p){const m=key.match(/^d(\d+)-(.+)$/);return m?p.days[m[1]-1].say[m[2]]:p.say[key]}
+  const d=DAYS.find(x=>x.short.toLowerCase()===pfx);return d&&d.say[key]}
+function sessionClipIds(){const common=Object.keys(DATA.common).map(k=>"common-"+k),p=P();
+  if(!p){const d=DAYS[cur];return [...common,...Object.keys(d.say).map(k=>`${d.short.toLowerCase()}-${k}`)]}
+  return [...common,...Object.keys(p.say).map(k=>`${p.id}-${k}`),...(pday!=null?Object.keys(p.days[pday].say||{}).map(k=>`${p.id}-d${pday+1}-${k}`):[])]}
 function loadClips(ids){if(!CLIPS)return;const c=ac();if(!c)return;
   ids.forEach(id=>{const meta=CLIPS.clips[id];if(!meta||buffers[id])return;buffers[id]="loading";
     fetch("audio/"+meta.file).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(b=>c.decodeAudioData(b)).then(buf=>buffers[id]=buf).catch(()=>{delete buffers[id]})})}
@@ -156,7 +232,7 @@ function enterSeg(i){segI=i;segElapsed=0;lastPhase=-1;tickAcc=0;rot={in:0,out:0}
   const s=segs[i];s.fired=0;s.paceFrom=null;
   if(s.bell)bell(1);$("sitStep").textContent=segs.length>1?`Step ${i+1} of ${segs.length}`:s.name}
 function begin(){
-  wakeAudio();loadClips(dayClipIds(DAYS[cur]));stopVoice();heldLines=[];
+  wakeAudio();loadClips(sessionClipIds());stopVoice();heldLines=[];
   $("sit").hidden=false;$("sitLive").hidden=false;$("paused").hidden=true;$("sitStep").textContent="Settling";
   segI=-1;segElapsed=0;inSession=true;done=false;run();keepAwake();drawClock();
   if(guided())setTimeout(()=>{if(running&&segI<0)speak(["common-settle"])},600);
@@ -170,8 +246,8 @@ function tick(){
   // Spoken lines scheduled for this step.
   while(seg.fired<seg.lines.length&&segElapsed>=seg.lines[seg.fired][0]){
     const [,...keys]=seg.lines[seg.fired++];speak(keys.map(k=>clipId(k)))}
-  // Breath pacing: a tone and a soft spoken cue at each phase.
-  if(seg.pattern){
+  // Breath pacing: a tone and a soft spoken cue at each phase, until paceUntil if the step sets one.
+  if(seg.pattern&&(seg.paceUntil==null||segElapsed<seg.paceUntil)){
     if(seg.paceFrom==null&&segElapsed>25)seg.paceFrom=segElapsed; // in case the introduction never reports finishing
     if(seg.paceFrom!=null&&segElapsed>=seg.paceFrom){
       const pi=phaseIdx(seg,segElapsed-seg.paceFrom),p=seg.pattern[pi%100];
@@ -180,7 +256,8 @@ function tick(){
     }
   }
 }
-function finish(){stop();stopVoice();inSession=false;done=true;bell(3);if(guided())setTimeout(()=>playClip("common-complete"),4200);addCount();
+function finish(){stop();stopVoice();inSession=false;bell(3);if(guided())setTimeout(()=>playClip(clipId("complete")),4200);addCount();
+  const p=P();if(p){logSit(p);render()}done=true;drawClock();
   setTimeout(()=>{$("sit").hidden=true},7500)}
 function stop(){running=false;clearInterval(timer);timer=null;try{wake&&wake.release()}catch(e){}wake=null}
 function pause(why){if(!running)return;stop();holdVoice();$("sitLive").hidden=true;$("paused").hidden=false;
@@ -196,19 +273,30 @@ $("tTones").onclick=()=>{prefs.tones=!prefs.tones;savePrefs();syncToggles()};
 $("test").onclick=()=>{ac();loadClips(["common-test"]);bell(1);setTimeout(()=>tone("in",3),600);setTimeout(()=>tone("out",3),3700);
   setTimeout(()=>{stopVoice();speak(["common-test"])},900)};
 $("days").onclick=e=>{const b=e.target.closest(".day");if(b)selectDay(+b.dataset.i)};
-const setMode=m=>{prefs.mode=m;savePrefs();selectDay(cur)};
+$("practices").onclick=e=>{const b=e.target.closest(".prac");if(!b)return;prefs.practice=b.dataset.id;savePrefs();
+  if(prefs.practice==="chakras")cur=todayIdx;render()};
+$("cycleChips").onclick=e=>{const p=P(),b=e.target.closest("button");if(!p||!b)return;const s=progLoad(p);
+  if(b.id==="restart"){if(!confirm(`Start ${p.name} over from day 1? Your sits so far will be cleared.`))return;s.log={}}
+  else s.cycle=b.dataset.cycle;
+  progSave(p,s);render()};
+$("lenChips").onclick=e=>{const p=P(),b=e.target.closest("[data-len]");if(!p||!b)return;prefs.len[p.id]=b.dataset.len;savePrefs();render()};
+const setMode=m=>{prefs.mode=m;savePrefs();render()};
 $("mGuided").onclick=()=>setMode("guided");
 $("mSilent").onclick=()=>setMode("silent");
 // Timers stop when the phone locks, so pause cleanly instead of skipping ahead.
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&running)pause("Paused (screen locked or app left)")});
 
+const getJSON=u=>fetch(u).then(r=>r.json());
 Promise.all([
-  fetch("content/days.json").then(r=>r.json()),
+  getJSON("content/days.json"),
+  getJSON("content/practices.json").then(ids=>Promise.all(ids.map(id=>getJSON(`content/practices/${id}.json`).then(p=>({...p,id}))))).catch(()=>[]),
   fetch("audio/clips.json").then(r=>r.ok?r.json():null).catch(()=>null)
-]).then(([data,clips])=>{
+]).then(([data,practices,clips])=>{
   DATA=data;DAYS=data.days;SETTLE=data.settleSeconds||10;CLIPS=clips&&clips.clips?clips:null;
+  practices.forEach(p=>PR[p.id]=p);ORDER=practices.map(p=>p.id);
+  if(prefs.practice!=="chakras"&&!PR[prefs.practice])prefs.practice="chakras";
   todayIdx=DAYS.findIndex(d=>d.dow===new Date().getDay());cur=todayIdx;
-  showCount();syncToggles();selectDay(cur);
+  showCount();syncToggles();render();
 });
 
 if(!standalone&&/iPhone|iPad|iPod/.test(navigator.userAgent))$("install").classList.add("show");

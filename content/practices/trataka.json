@@ -1,0 +1,66 @@
+{
+ "name": "Trataka",
+ "sub": "Candle-flame gazing",
+ "title": "<em>Trataka</em> · the flame",
+ "short": "Trataka",
+ "c": "#d0782a",
+ "doneText": "Complete. Blow out the candle.",
+ "lede": {
+  "guided": "Light a candle at eye level, about an arm's length away, and dim the room. Press Begin. You'll gaze at the flame three times, each a little longer, and close your eyes after each to watch its afterimage. The guru tells you when to open and close.",
+  "silent": "No voice. One bell for each switch: the first bell, eyes open on the flame; the next, eyes closed on the afterimage; and so on, three rounds. Three bells end it."
+ },
+ "defaultCycle": "d21",
+ "cycles": {
+  "d21": {"days": 21, "perDay": 1, "label": "21 days · once a day"},
+  "d40": {"days": 40, "perDay": 1, "label": "40 days · once a day"}
+ },
+ "facts": [
+  ["Set up", "A candle at arm's length, the flame at eye level. A dim room with no draught."],
+  ["Sit", "Comfortably upright. Glasses off if you can see the flame without them."],
+  ["Gaze", "At the tip of the wick. Steady, blinking as little as is comfortable."],
+  ["Take care", "Stop if the eyes strain. Skip this practice if you have epilepsy, glaucoma or another eye condition."]
+ ],
+ "release": "Trataka trains one-pointed attention through the eyes. Fixing the gaze stills the mind; the afterimage then gives the closed eyes something steady to rest on, and slowly that steadiness carries over into the rest of the day.",
+ "guidelines": [
+  "Watering eyes are normal. Let them water; close the eyes if it gets uncomfortable.",
+  "Never stare at a bright light or the sun. A small candle flame is enough.",
+  "Blow the candle out before you get up, and keep it away from curtains and paper."
+ ],
+ "guided": [
+  {"key": "prep", "name": "Prepare", "dur": 50, "lines": [[2, "prep"]],
+   "read": "Candle lit, eyes closed for now. Relax the eyes, the brow and the face."},
+  {"key": "gaze1", "name": "Gaze", "dur": 90, "bell": true, "lines": [[2, "gaze_1"]],
+   "read": "Eyes open on the tip of the wick: steady and soft."},
+  {"key": "inner1", "name": "Inner flame", "dur": 60, "bell": true, "lines": [[2, "inner_1"]],
+   "read": "Eyes closed. Watch the afterimage; bring it back to the space between the eyebrows when it drifts."},
+  {"key": "gaze2", "name": "Gaze", "dur": 120, "bell": true, "lines": [[2, "gaze_2"]],
+   "read": "Eyes open on the flame again, a little longer."},
+  {"key": "inner2", "name": "Inner flame", "dur": 90, "bell": true, "lines": [[2, "inner_2"]],
+   "read": "Eyes closed on the inner flame."},
+  {"key": "gaze3", "name": "Gaze", "dur": 150, "bell": true, "lines": [[2, "gaze_3"]],
+   "read": "The last and longest gaze. No effort, just looking."},
+  {"key": "inner3", "name": "Stillness", "dur": 180, "bell": true, "lines": [[2, "inner_3"]],
+   "read": "Eyes closed. Stay with the inner light as long as it lasts, then sit in the stillness behind the eyes."},
+  {"key": "close", "name": "Close", "dur": 30, "lines": [[1, "close"]],
+   "read": "Palms over the eyes, open into the palms, then blow out the candle."}
+ ],
+ "silent": [
+  {"key": "gaze1", "name": "Gaze", "dur": 90, "read": "First bell: eyes open on the flame."},
+  {"key": "inner1", "name": "Inner flame", "dur": 60, "bell": true, "read": "Bell: eyes closed on the afterimage."},
+  {"key": "gaze2", "name": "Gaze", "dur": 120, "bell": true, "read": "Bell: eyes open on the flame."},
+  {"key": "inner2", "name": "Inner flame", "dur": 90, "bell": true, "read": "Bell: eyes closed."},
+  {"key": "gaze3", "name": "Gaze", "dur": 150, "bell": true, "read": "Bell: eyes open, the longest gaze."},
+  {"key": "inner3", "name": "Stillness", "dur": 180, "bell": true, "read": "Bell: eyes closed until three bells end it."}
+ ],
+ "say": {
+  "prep": "Today... Trataka. The flame at eye level... about an arm's length away. Sit comfortably upright. Close the eyes for a moment... and relax the eyes... the brow... the whole face.",
+  "gaze_1": "Now open the eyes... and gaze at the flame. Rest the eyes on the tip of the wick. Steady... soft... blinking as little as is comfortable. If the eyes water... let them. It is only plumbing.",
+  "inner_1": "Now close the eyes. Watch the image of the flame... inside. When it drifts... gently bring it back to the space between the eyebrows. When it fades... just watch the darkness.",
+  "gaze_2": "Open the eyes... the flame again. A little longer this time.",
+  "inner_2": "Close the eyes. The inner flame... hold it gently... let it fade when it fades.",
+  "gaze_3": "One last time... open the eyes. Gaze at the flame... no effort... just looking.",
+  "inner_3": "Close the eyes... and stay with the inner light as long as it lasts. Then... sit in the stillness behind the eyes.",
+  "close": "Cup the palms over the eyes... feel their warmth. Open the eyes into the palms... then slowly lower the hands. And blow out the candle... with gratitude... or at least... carefully.",
+  "complete": "Well done. The flame is out... but a little of it stays with you."
+ }
+}

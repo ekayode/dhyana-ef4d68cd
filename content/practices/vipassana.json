@@ -1,0 +1,63 @@
+{
+ "name": "Body scan",
+ "sub": "Vipassana-style insight",
+ "title": "Body <em>scan</em>",
+ "short": "Body scan",
+ "c": "#a8772f",
+ "doneText": "Complete. Everything changes; carry that lightly.",
+ "lede": {
+  "guided": "Sit, press Begin, and close your eyes. Five minutes on the breath at the nose to steady the mind, then a slow scan from head to toe and back, watching sensations without liking or disliking them. A short wish for all beings closes it.",
+  "silent": "No voice. A bell starts the breath at the nose, a bell starts the scan, and a bell starts the final rest. Three bells end it."
+ },
+ "defaultCycle": "d10",
+ "cycles": {
+  "d10": {"days": 10, "perDay": 1, "label": "10 days · once a day"},
+  "d30": {"days": 30, "perDay": 1, "label": "30 days · once a day"}
+ },
+ "facts": [
+  ["Sit", "Upright and still, on a cushion or chair. Eyes closed."],
+  ["First", "The breath at the small area below the nose, above the upper lip."],
+  ["Then", "Sensations, part by part: warmth, tingling, pressure, or nothing at all."],
+  ["The attitude", "Equanimity. Don't chase the pleasant, don't push away the unpleasant."]
+ ],
+ "release": "The breath steadies the mind; the scan sharpens it. Watching sensations arise and pass, again and again, shows you first-hand that everything changes, including whatever is bothering you today.",
+ "guidelines": [
+  "“Nothing at all” is also a sensation. Note it and move on.",
+  "Strong sensations, like an itch or an ache, are part of the practice. Watch them change before you move.",
+  "If you want to learn Vipassana properly, look for a 10-day course in the tradition of S. N. Goenka (dhamma.org), offered free."
+ ],
+ "guided": [
+  {"key": "arrive", "name": "Arrive", "dur": 40, "lines": [[2, "arrive"]],
+   "read": "Sit upright, still and comfortable. Eyes closed."},
+  {"key": "anapana", "name": "Breath at the nose", "dur": 300, "lines": [[1, "anapana_1"], [150, "anapana_2"]],
+   "read": "Feel the natural breath where it touches the small area below the nose. Just know it coming in and going out."},
+  {"key": "scan", "name": "The scan", "dur": 600, "bell": true,
+   "lines": [[3, "scan_1"], [70, "scan_2"], [190, "scan_3"], [330, "scan_4"], [450, "scan_5"]],
+   "read": "From the top of the head down to the toes, then back up, part by part, noticing sensations without reacting to them."},
+  {"key": "equal", "name": "The whole body", "dur": 180, "bell": true, "lines": [[3, "equal"]],
+   "read": "Rest with the whole body at once. Whatever arises will pass."},
+  {"key": "close", "name": "Sharing", "dur": 60, "bell": true, "lines": [[3, "close"]],
+   "read": "Share what you've cultivated: may all beings be happy, peaceful and free."}
+ ],
+ "silent": [
+  {"key": "anapana", "name": "Breath at the nose", "dur": 300,
+   "read": "A bell starts it. The natural breath at the small area below the nose."},
+  {"key": "scan", "name": "The scan", "dur": 600, "bell": true,
+   "read": "A bell. Head to toe and back, part by part, without reacting."},
+  {"key": "equal", "name": "The whole body", "dur": 180, "bell": true,
+   "read": "A bell. Rest with the whole body at once. Three bells end it."}
+ ],
+ "say": {
+  "arrive": "Today... the body scan. Sit upright... still... comfortable. Close the eyes. For the next twenty minutes... the body is your laboratory.",
+  "anapana_1": "Bring attention to the small area below the nose... above the upper lip. Feel the breath as it comes in... and as it goes out. Natural breath. Don't control it... just know it.",
+  "anapana_2": "The mind wanders... that is its job. Yours is to notice... and come back to the breath at the nose. Again... and again. Each return... is one repetition at the gym.",
+  "scan_1": "Now... move the attention to the top of the head. Notice any sensation there... warmth... tingling... pressure... or nothing at all. Nothing at all... is also a sensation.",
+  "scan_2": "Slowly move down. The face... the back of the head... the neck... the throat. Part by part... noticing. Not liking... not disliking. Just... noticing.",
+  "scan_3": "The shoulders... down each arm... to the tips of the fingers. Then the chest... the back... the belly. Take your time. The body is not in a hurry.",
+  "scan_4": "The hips... down each leg... the thighs... the knees... the calves... the feet... to the tips of the toes.",
+  "scan_5": "Now from the toes... back up to the head... part by part. Every sensation is changing... arising... passing away. Watch it change. Don't hold on... don't push away.",
+  "equal": "Now rest with the whole body at once. Whatever arises... pleasant... unpleasant... it will pass. Everything does. Even this sentence.",
+  "close": "Before we finish... share what you have cultivated. May all beings be happy... May all beings be peaceful... May all beings be free.",
+  "complete": "Well done. Everything changes... so does this mood. Go gently."
+ }
+}
