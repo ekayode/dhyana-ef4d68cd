@@ -84,6 +84,9 @@ function drawClock(){
 // "playback" lets Safari play through the silent switch (iOS 17+).
 try{if(navigator.audioSession)navigator.audioSession.type="playback"}catch(e){}
 function ac(){try{ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();if(ctx.state!=="running")ctx.resume()}catch(e){}return ctx}
+// After the phone locks or the app is left, iOS can leave the audio context "interrupted" and silent.
+// Called from a tap (Resume), so a fresh context is allowed to start; decoded recordings work in it as-is.
+function wakeAudio(){try{if(ctx&&ctx.state!=="running"){ctx.close().catch(()=>{});ctx=null}}catch(e){ctx=null}return ac()}
 function bell(n=1,delay=0,vol=1){const c=ac();if(!c)return;
   for(let r=0;r<n;r++){const t0=c.currentTime+delay+r*1.6;
     [[220,.2],[330,.08],[607,.05]].forEach(([f,v])=>{const o=c.createOscillator(),g=c.createGain();o.type="sine";o.frequency.value=f;
@@ -121,7 +124,9 @@ function playClip(id,doneFn){
   if(!prefs.voice){doneFn();return}
   const buf=buffers[id];
   if(buf&&buf!=="loading"){const c=ac(),s=c.createBufferSource(),g=c.createGain();g.gain.value=1;s.buffer=buf;s.connect(g).connect(c.destination);
-    curSrc=s;s.onended=()=>{if(curSrc===s){curSrc=null;doneFn()}};s.start();return}
+    // If the audio is stalled, onended never fires; the timeout keeps one stuck line from silencing the rest.
+    let fired=false;const fin=()=>{if(!fired&&curSrc===s){fired=true;curSrc=null;doneFn()}};
+    curSrc=s;s.onended=fin;s.start();setTimeout(fin,(buf.duration+2)*1000);return}
   const text=clipText(id);
   if(!canSpeak||!text){doneFn();return}
   try{let fired=false;const fin=()=>{if(!fired){fired=true;doneFn()}};
@@ -129,13 +134,16 @@ function playClip(id,doneFn){
     speechSynthesis.speak(u);setTimeout(fin,text.length*85+2500)} // onend can fail to fire on iOS
   catch(e){doneFn()}
 }
+let curLine=null, heldLines=[]; // the line being spoken, and lines kept aside while paused
 function speak(ids){voiceQ.push(...ids);if(!speaking)nextLine()}
 function nextLine(){
   const id=voiceQ.shift();
   if(!id){speaking=false;onVoiceIdle();return}
-  speaking=true;playClip(id,()=>{gapTimer=setTimeout(nextLine,GAP*1000)});
+  speaking=true;curLine=id;playClip(id,()=>{curLine=null;gapTimer=setTimeout(nextLine,GAP*1000)});
 }
-function stopVoice(){voiceQ.length=0;clearTimeout(gapTimer);speaking=false;
+// Pausing keeps the interrupted line and everything queued after it, so Resume can pick up where the guru left off.
+function holdVoice(){heldLines=[...(curLine?[curLine]:[]),...voiceQ];stopVoice()}
+function stopVoice(){voiceQ.length=0;clearTimeout(gapTimer);speaking=false;curLine=null;
   if(curSrc){const s=curSrc;curSrc=null;try{s.stop()}catch(e){}}try{speechSynthesis.cancel()}catch(e){}}
 // Breath pacing waits for the breath's spoken introduction to finish.
 function onVoiceIdle(){const seg=segs[segI];if(seg&&seg.pattern&&seg.paceFrom==null&&running)seg.paceFrom=segElapsed+.5}
@@ -148,7 +156,7 @@ function enterSeg(i){segI=i;segElapsed=0;lastPhase=-1;tickAcc=0;rot={in:0,out:0}
   const s=segs[i];s.fired=0;s.paceFrom=null;
   if(s.bell)bell(1);$("sitStep").textContent=segs.length>1?`Step ${i+1} of ${segs.length}`:s.name}
 function begin(){
-  ac();loadClips(dayClipIds(DAYS[cur]));stopVoice();
+  wakeAudio();loadClips(dayClipIds(DAYS[cur]));stopVoice();heldLines=[];
   $("sit").hidden=false;$("sitLive").hidden=false;$("paused").hidden=true;$("sitStep").textContent="Settling";
   segI=-1;segElapsed=0;inSession=true;done=false;run();keepAwake();drawClock();
   if(guided())setTimeout(()=>{if(running&&segI<0)speak(["common-settle"])},600);
@@ -175,13 +183,14 @@ function tick(){
 function finish(){stop();stopVoice();inSession=false;done=true;bell(3);if(guided())setTimeout(()=>playClip("common-complete"),4200);addCount();
   setTimeout(()=>{$("sit").hidden=true},7500)}
 function stop(){running=false;clearInterval(timer);timer=null;try{wake&&wake.release()}catch(e){}wake=null}
-function pause(why){if(!running)return;stop();stopVoice();$("sitLive").hidden=true;$("paused").hidden=false;
+function pause(why){if(!running)return;stop();holdVoice();$("sitLive").hidden=true;$("paused").hidden=false;
   const s=segI<0?"settling":`step ${segI+1}, ${segs[segI].name}`;$("pausedNote").textContent=(why||"Paused")+` during ${s}`}
 
 $("begin").onclick=begin;
 $("sit").onclick=e=>{if(e.target.closest("#paused"))return;pause()};
-$("resume").onclick=()=>{ac();$("paused").hidden=true;$("sitLive").hidden=false;run();keepAwake()};
-$("end").onclick=()=>{stop();stopVoice();inSession=false;drawClock();$("sit").hidden=true};
+$("resume").onclick=()=>{wakeAudio();$("paused").hidden=true;$("sitLive").hidden=false;run();keepAwake();
+  const held=heldLines;heldLines=[];if(held.length)setTimeout(()=>{if(running)speak(held)},800)};
+$("end").onclick=()=>{stop();stopVoice();heldLines=[];inSession=false;drawClock();$("sit").hidden=true};
 $("tVoice").onclick=()=>{prefs.voice=!prefs.voice;savePrefs();syncToggles()};
 $("tTones").onclick=()=>{prefs.tones=!prefs.tones;savePrefs();syncToggles()};
 $("test").onclick=()=>{ac();loadClips(["common-test"]);bell(1);setTimeout(()=>tone("in",3),600);setTimeout(()=>tone("out",3),3700);
