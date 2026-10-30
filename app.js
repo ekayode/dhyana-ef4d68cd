@@ -1,4 +1,4 @@
-/* Seven Pools: screens, timing and audio.
+/* Dhyana: screens, timing and audio.
    Practices: the seven chakras (content/days.json, one pool per weekday) plus the practices listed in content/practices.json,
    each described entirely by its own file in content/practices/. Recorded voice from audio/clips.json. */
 const $=id=>document.getElementById(id);

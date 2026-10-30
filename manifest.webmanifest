@@ -1,12 +1,12 @@
 {
-  "name": "Seven Pools",
-  "short_name": "Seven Pools",
-  "description": "A 12-minute daily chakra sit, one pool for each day of the week.",
+  "name": "Dhyana",
+  "short_name": "Dhyana",
+  "description": "Daily meditation: the seven chakras, Yoga Nidra, Isha Kriya, metta, body scan, So Hum and candle gazing.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0f1219",
+  "background_color": "#1e1b3e",
   "theme_color": "#0f1219",
   "icons": [
     {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},

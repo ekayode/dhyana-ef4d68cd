@@ -1,6 +1,6 @@
-# Seven Pools
+# Dhyana
 
-A daily meditation app, installable from the home screen. Practices: the seven chakras (one pool per weekday, from Aang's seven chakras with Guru Pathik), Yoga Nidra, Isha Kriya, Metta, a Vipassana-style body scan, So Hum and Trataka. Each practice has its own cycle (for example 90 days of Isha Kriya) and tracks the days you've sat.
+A daily meditation app, installable from the home screen. (It began as "Seven Pools", which is why the repository and URL keep that name.) Practices: the seven chakras (one pool per weekday, from Aang's seven chakras with Guru Pathik), Yoga Nidra, Isha Kriya, Metta, a Vipassana-style body scan, So Hum and Trataka. Each practice has its own cycle (for example 90 days of Isha Kriya) and tracks the days you've sat.
 
 ## Files
 
@@ -8,7 +8,7 @@ A daily meditation app, installable from the home screen. Practices: the seven c
 - `content/practices.json` and `content/practices/<id>.json`: every other practice. Each file holds its facts, cycles, the steps for Guided and No guidance, and every spoken line. Steps marked `flex` stretch or shrink when someone picks a different time (5 min to 2 hours); the rest keep their length. A new practice is a new file plus its id in `practices.json` and in `PRACTICES` in `sw.js`.
 - `app.js`: screens, session timing, bells, breath tones, voice cues.
 - `styles.css`, `index.html`: layout.
-- `manifest.webmanifest`, `sw.js`, `icons/`: what makes it installable and work offline.
+- `manifest.webmanifest`, `sw.js`, `icons/`: what makes it installable and work offline. `tools/icon.py` draws the icon (needs Pillow).
 - `audio/`: the voice recordings (ElevenLabs, designed voice "Guru Pathik", model Eleven v4), listed in `audio/clips.json`.
 - `tools/voice.mjs`: records the spoken lines. Run it with no arguments for help.
 
