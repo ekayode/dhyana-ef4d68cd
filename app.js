@@ -4,8 +4,8 @@
 const $=id=>document.getElementById(id);
 let DATA=null, DAYS=[], SETTLE=10, todayIdx=0, CLIPS=null, PR={}, ORDER=[], pday=null;
 let cur=0, segs=[], segI=-1, segElapsed=0, running=false, inSession=false, done=false, last=0, timer=null, wake=null, ctx=null, lastPhase=-1, tickAcc=0;
-const prefs={voice:true,tones:true,mode:"guided",practice:"chakras",len:{}}; // mode: guided | silent; len: chosen length per practice
-try{const p=JSON.parse(localStorage.getItem("sp-prefs")||"{}");Object.assign(prefs,p)}catch(e){}
+const prefs={voice:true,tones:true,mode:"guided",practice:"chakras",time:{}}; // mode: guided | silent; time: chosen minutes per practice (0 = default)
+try{const p=JSON.parse(localStorage.getItem("sp-prefs")||"{}");Object.assign(prefs,p);delete prefs.len;prefs.time=prefs.time||{}}catch(e){}
 const canSpeak="speechSynthesis" in window;
 const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
 const P=()=>PR[prefs.practice]||null; // the current practice file; null means the seven chakras
@@ -20,39 +20,60 @@ function SEGS(d){
    {key:"breath",name:d.breath.name,dur:T.breath,read:d.breath.read,pattern:d.breath.pattern,guideUntil:T.breath-G,
     lines:[[0,"intro"],...(d.breath.lines||[]),[T.breath-G,"on_your_own"]]},
    {key:"pool",name:"The pool",dur:T.pool,read:d.say.pool.replace(/\.\.\./g,","),lines:[[1,"pool"]]},
-   {key:"sit",name:"Meditation",dur:T.meditation,bell:true,
-    read:`Silence, with two brief check-ins from the guru (around ${DATA.checkins.map(s=>fmt(s)).join(" and ")}) on the breath, the pool and your question. When a thought pulls you away, notice it and return to the breath.`,
+   {key:"sit",name:"Meditation",dur:T.meditation,bell:true,flex:true,
+    read:"Silence, with two brief check-ins from the guru, a third and two-thirds of the way through, on the breath, the pool and your question. When a thought pulls you away, notice it and return to the breath.",
     lines:[[3,"meditate"],...DATA.checkins.map((s,k)=>[s,"checkin_"+(k+1)])]},
    {key:"seal",name:"Seal",dur:T.seal,bell:true,read:d.seal,lines:[[3,"seal_intro","seal"]]}
   ];
 }
 // No guidance: straight into the meditation. A bell starts it, the guru's two check-ins are the only voice, three bells end it.
 function SILENT(d){
-  return [{key:"sit",name:"Meditation",dur:DATA.timeline.meditation,lines:DATA.checkins.map((s,k)=>[s,"checkin_"+(k+1)]),q:true,read:d.ask,
-    pre:`Silence. A bell begins the sit, the guru checks in briefly at ${DATA.checkins.map(s=>fmt(s)).join(" and ")} on the breath, the pool and this question, and three bells end it.`}];
+  return [{key:"sit",name:"Meditation",dur:DATA.timeline.meditation,flex:true,lines:DATA.checkins.map((s,k)=>[s,"checkin_"+(k+1)]),q:true,read:d.ask,
+    pre:"Silence. A bell begins the sit, the guru checks in briefly a third and two-thirds of the way through on the breath, the pool and this question, and three bells end it."}];
 }
 const LEDE={
   guided:"Take a minute with it. Once you press Begin, you won't need to look again. All the guidance comes first, in about two minutes: your intention, the breath, and the pool. Then ten minutes of quiet, where the guru checks in briefly every few minutes, and a short seal.",
   silent:"No guidance up front. Once you press Begin, you get ten seconds to settle, then the meditation starts straight away. Read the pool above and the question below first: the guru will check in on them twice."
 };
 
-/* ---------- practices from content files ---------- */
-// A step's dur is seconds, or the name of a value in the chosen length. A line's time is seconds, negative (from the end) or "50%".
+/* ---------- steps, and fitting them to a chosen time ---------- */
+// A step: dur in seconds. lines: [time, ...keys], time in seconds, negative (from the end) or "50%".
 // every: {from, step, keys, endGap} adds check-ins at a steady interval, cycling through keys.
-const lenVars=p=>p.lengths?(p.lengths[prefs.len[p.id]]||Object.values(p.lengths)[0]):{};
-function build(p,list,vars=lenVars(p)){
-  const day=pday!=null?p.days[pday]:{};
-  const fill=t=>t&&t.replace(/\{(\w+)\}/g,(m,k)=>day[k]!=null?day[k]:m);
-  return list.map(s=>{
-    const dur=typeof s.dur==="string"?vars[s.dur]:s.dur;
-    const at=t=>typeof t==="string"?Math.round(dur*parseFloat(t)/100):t<0?dur+t:t;
+// flex: the step stretches or shrinks when a different time is chosen (true weighs it by its duration; a number is its weight).
+// Only flexible steps change length; their check-ins and cues spread out in proportion, and the spoken guidance stays as it is.
+const TIMES=[5,10,15,20,30,45,60,90,120]; // minutes offered besides each practice's default
+function speechSecs(keys){return keys.reduce((a,k)=>{const m=CLIPS&&(k==="in"||k==="out"?null:CLIPS.clips[clipId(k)]);return a+(m&&m.dur||8)+GAP},0)}
+// The shortest a flexible step can be: room for all its spoken cues plus a little quiet, and never shorter than its guided breathing.
+function minDur(s){if(!s.dur)return 0;
+  let m=Math.max(45,speechSecs((s.lines||[]).flatMap(l=>l.slice(1)))+20);
+  if(s.guideUntil!=null)m=Math.max(m,s.guideUntil+20);return Math.min(m,s.dur)}
+// Durations for each step so the session lasts target seconds, or null if it can't be that short.
+function fitDurs(list,target){
+  const base=list.map(s=>s.dur);if(!target)return base;
+  const flex=base.map((d,i)=>list[i].flex?i:-1).filter(i=>i>=0);if(!flex.length)return null;
+  const mins=list.map(s=>s.flex?minDur(s):s.dur),sum=a=>a.reduce((x,i)=>x+i,0);
+  const avail=target-sum(list.filter(s=>!s.flex).map(s=>s.dur)),fbase=sum(flex.map(i=>base[i])),fmin=sum(flex.map(i=>mins[i]));
+  if(avail<fmin||(avail>fbase&&!flex.some(i=>list[i].flex===true?base[i]:list[i].flex)))return null;
+  const out=base.slice();
+  if(avail>=fbase){const w=i=>list[i].flex===true?base[i]:list[i].flex,W=sum(flex.map(w));flex.forEach(i=>out[i]=Math.round(base[i]+(avail-fbase)*w(i)/W))}
+  else{const room=fbase-fmin;flex.forEach(i=>out[i]=Math.round(base[i]-(fbase-avail)*(base[i]-mins[i])/room))}
+  out[flex[flex.length-1]]+=target-sum(out); // rounding
+  return out;
+}
+function shape(list,target,fill=t=>t){
+  const durs=(target&&fitDurs(list,target))||list.map(s=>s.dur);
+  return list.map((s,i)=>{
+    const dur=durs[i],r=s.dur?dur/s.dur:1,g=t=>t<0?dur+t:t;
+    // Cues in a flexible step move with it, except the opening words and anything tied to the guided breathing.
+    const at=t=>typeof t==="string"?Math.round(dur*parseFloat(t)/100):t<0?dur+t:s.flex&&t>5&&!(s.guideUntil!=null&&t<=s.guideUntil)?Math.round(t*r):t;
     const lines=(s.lines||[]).map(([t,...k])=>[at(t),...k]);
-    if(s.every){const e=s.every;for(let t=e.from,k=0;t<=dur-(e.endGap||60);t+=e.step,k++)lines.push([t,e.keys[k%e.keys.length]])}
+    if(s.every){const e=s.every,f=s.flex?r:1;for(let t=e.from*f,k=0;t<=dur-(e.endGap||60);t+=Math.max(60,e.step*f),k++)lines.push([Math.round(t),e.keys[k%e.keys.length]])}
     lines.sort((a,b)=>a[0]-b[0]);
     return {...s,dur,lines,name:fill(s.name),read:fill(s.read),
-      guideUntil:s.guideUntil!=null?at(s.guideUntil):undefined,paceUntil:s.paceUntil!=null?at(s.paceUntil):undefined};
-  });
+      guideUntil:s.guideUntil!=null?g(s.guideUntil):undefined,paceUntil:s.paceUntil!=null?g(s.paceUntil):undefined};
+  }).filter(s=>s.dur>0);
 }
+const timeLabel=m=>m<60?`${m} min`:`${String(m/60).replace(".5","½")} hr`;
 const hasSilent=()=>{const p=P();return p?!!p.silent:true};
 const guided=()=>prefs.mode!=="silent"||!hasSilent();
 
@@ -71,7 +92,8 @@ function progress(p){
 }
 function logSit(p){const s=progLoad(p),k=dateKey();s.cycle=s.cycle||p.defaultCycle;s.log=s.log||{};s.log[k]=(s.log[k]||0)+1;progSave(p,s)}
 
-const minLabel=s=>{const m=s/60;return (Number.isInteger(m)?m:Math.floor(m)+(m%1>=.5?"½":""))+" min"};
+const minLabel=s=>{const m=s/60;if(m>=59.5){const h=Math.floor((m+.5)/60),r=Math.round(m-h*60);return r>0?`${h} hr ${r} min`:`${h} hr`}
+  return (Number.isInteger(m)?m:Math.floor(m)+(m%1>=.5?"½":""))+" min"};
 function dateKey(){const n=new Date();return n.getFullYear()+"-"+(n.getMonth()+1)+"-"+n.getDate()}
 function readCount(){try{return +(localStorage.getItem("sp-"+dateKey())||0)}catch(e){return 0}}
 function addCount(){try{localStorage.setItem("sp-"+dateKey(),readCount()+1)}catch(e){} showCount()}
@@ -80,7 +102,7 @@ function greet(){const h=new Date().getHours();$("hello").textContent=h<5?"Good 
 function savePrefs(){try{localStorage.setItem("sp-prefs",JSON.stringify(prefs))}catch(e){}}
 function syncToggles(){const can=!!CLIPS||canSpeak;$("tVoice").setAttribute("aria-pressed",prefs.voice&&can);$("tTones").setAttribute("aria-pressed",prefs.tones);
   if(!can){$("tVoice").disabled=true;$("voiceNote").textContent="Voice guidance isn't available on this device. You'll get bells and breath tones only."}}
-const fmtDur=s=>s<60?`${s} sec`:s%60?`${Math.floor(s/60)} min ${s%60} sec`:`${s/60} min`;
+const fmtDur=s=>s<60?`${s} sec`:s>=3600?minLabel(s):s%60?`${Math.floor(s/60)} min ${s%60} sec`:`${s/60} min`;
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]);
 
 /* ---------- screens ---------- */
@@ -95,10 +117,10 @@ const facts=rows=>$("facts").innerHTML=rows.map(([k,v])=>`<dt>${esc(k)}</dt><dd>
 function selectDay(i){cur=i;render()}
 function render(){
   const p=P();
-  $("days").hidden=!!p;$("cycle").hidden=!p;$("lenRow").hidden=!(p&&p.lengths);$("progWrap").hidden=!p;
+  $("days").hidden=!!p;$("cycle").hidden=!p;$("progWrap").hidden=!p;
   document.querySelectorAll("[data-only]").forEach(el=>el.hidden=el.dataset.only!==(p?"other":"chakras"));
   renderPractices();
-  let full,quiet,lede;
+  let rawFull,rawQuiet,lede,fill;
   if(p){
     const pr=progress(p);pday=pr.dayIndex;const day=pday!=null?p.days[pday]:null;
     document.documentElement.style.setProperty("--chakra",p.c);
@@ -109,9 +131,8 @@ function render(){
     $("teach").innerHTML=`<b>Guidelines</b><ul>${p.guidelines.map(g=>`<li>${g}</li>`).join("")}</ul>`;
     $("cycleChips").innerHTML=Object.entries(p.cycles).map(([id,c])=>`<button data-cycle="${id}" aria-pressed="${pr.id===id}">${esc(c.label.replace(" · ",", "))}</button>`).join("");
     $("cycleNote").textContent=p.cycleNote||"The day count goes up each day you sit; a missed day doesn't reset it.";
-    if(p.lengths)$("lenChips").innerHTML=Object.entries(p.lengths).map(([id,L])=>
-      `<button class="chip" data-len="${id}" aria-pressed="${lenVars(p)===L}">${esc(L.label)} · ${minLabel(build(p,p.guided,L).reduce((a,s)=>a+s.dur,0))}</button>`).join("");
-    full=build(p,p.guided);quiet=p.silent?build(p,p.silent):null;lede=p.lede;
+    rawFull=p.guided;rawQuiet=p.silent;lede=p.lede;
+    fill=t=>t&&t.replace(/\{(\w+)\}/g,(m,k)=>day&&day[k]!=null?day[k]:m);
   }else{
     pday=null;const d=DAYS[cur];document.documentElement.style.setProperty("--chakra",d.c);renderDays();
     $("poolEyebrow").textContent=`${cur===todayIdx?"Today · ":""}${d.short}`;
@@ -119,8 +140,15 @@ function render(){
     facts([["Where",d.where],["Deals with",d.deals],["Blocked by",d.block],["Silent sound",d.bija]]);
     $("release").textContent=d.release;
     $("teach").innerHTML=`<b>If you teach this</b>${d.teach}`;
-    full=SEGS(d);quiet=SILENT(d);lede=LEDE;
+    rawFull=SEGS(d);rawQuiet=SILENT(d);lede=LEDE;
   }
+  // The chosen time applies to both modes where it fits; otherwise that mode uses its default.
+  const want=(prefs.time[prefs.practice]||0)*60,fit=list=>shape(list,want&&fitDurs(list,want)?want:0,fill);
+  const full=fit(rawFull),quiet=rawQuiet?fit(rawQuiet):null,act=guided()?rawFull:rawQuiet;
+  const def=act.reduce((a,s)=>a+s.dur,0),sel=want&&fitDurs(act,want)?want/60:0;
+  $("timeChips").innerHTML=[`<button data-time="0" aria-pressed="${!sel}">Default · ${minLabel(def)}</button>`,
+    ...TIMES.filter(m=>Math.abs(m*60-def)>=90&&fitDurs(act,m*60)).map(m=>`<button data-time="${m}" aria-pressed="${sel===m}">${timeLabel(m)}</button>`)].join("");
+  const tc=$("timeChips"),on=tc.querySelector('[aria-pressed="true"]');if(on)tc.scrollLeft=Math.max(0,on.offsetLeft-tc.clientWidth/2+on.offsetWidth/2); // keep the chosen time in view
   segs=guided()?full:quiet;done=false;drawClock();
   $("mGuided").setAttribute("aria-pressed",guided());$("mSilent").setAttribute("aria-pressed",!guided());
   $("mGuided").textContent=`Guided · ${minLabel(full.reduce((a,s)=>a+s.dur,0))}`;
@@ -278,7 +306,7 @@ $("practices").onclick=e=>{const b=e.target.closest(".prac");if(!b)return;prefs.
 $("cycleChips").onclick=e=>{const p=P(),b=e.target.closest("[data-cycle]");if(!p||!b)return;const s=progLoad(p);s.cycle=b.dataset.cycle;progSave(p,s);render()};
 $("restart").onclick=()=>{const p=P();if(!p||!confirm(`Start ${p.name} over from day 1? Your sits so far will be cleared.`))return;
   const s=progLoad(p);s.log={};progSave(p,s);render()};
-$("lenChips").onclick=e=>{const p=P(),b=e.target.closest("[data-len]");if(!p||!b)return;prefs.len[p.id]=b.dataset.len;savePrefs();render()};
+$("timeChips").onclick=e=>{const b=e.target.closest("[data-time]");if(!b)return;prefs.time[prefs.practice]=+b.dataset.time;savePrefs();render()};
 $("openSettings").onclick=()=>{const d=$("settings");d.showModal?d.showModal():d.setAttribute("open","")};
 $("closeSettings").onclick=()=>$("settings").close();
 $("settings").onclick=e=>{if(e.target===$("settings"))$("settings").close()}; // tap outside the sheet

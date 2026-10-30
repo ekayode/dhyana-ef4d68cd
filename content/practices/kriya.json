@@ -9,10 +9,6 @@
   "guided": "Read it once, press Begin, and close your eyes. The guru sets up the posture, breathes the thought with you for a minute, counts the seven sounds and closes the sit. Don't stop in the middle.",
   "silent": "Bells only, plus a three-word cue for the sound. Learn the three stages below first; you'll do them without being talked through."
  },
- "lengths": {
-  "standard": {"label": "Standard", "breath": 420, "still": 300},
-  "long": {"label": "Long", "breath": 660, "still": 360}
- },
  "defaultCycle": "d90",
  "cycles": {
   "d90": {"days": 90, "perDay": 1, "label": "90 days · once a day"},
@@ -35,24 +31,24 @@
  "guided": [
   {"key": "posture", "name": "Posture", "dur": 55, "lines": [[2, "intro", "teach"]],
    "read": "Settle into the posture. The guru then explains the one thought that carries the whole practice."},
-  {"key": "breath", "name": "Breath and thought", "dur": "breath",
+  {"key": "breath", "name": "Breath and thought", "dur": 420, "flex": true,
    "pattern": [["in", 5, "kin"], ["out", 6, "kout"]], "guideUntil": 75, "paceUntil": 75,
    "lines": [[0, "begin"], [75, "own"]], "every": {"from": 180, "step": 180, "keys": ["check_1", "check_2", "check_3"], "endGap": 60},
    "read": "Inhale gently, silently saying “I am not the body.” Exhale gently, “I am not even the mind.” Each breath lasts as long as its thought. The guru breathes it with you for about a minute, then checks in every few minutes."},
   {"key": "aaa", "name": "Aaah, seven times", "dur": 100,
    "lines": [[1, "aaa_intro"], [26, "n1"], [37, "n2"], [48, "n3"], [59, "n4"], [70, "n5"], [81, "n6"], [92, "n7"]],
    "read": "Mouth wide open, exhale fully into a long “Aaah” from just below the navel, loud enough to feel the vibration. Seven times; the guru counts."},
-  {"key": "still", "name": "Stillness", "dur": "still", "bell": true, "lines": [[3, "still_intro"], ["50%", "still_check"]],
+  {"key": "still", "name": "Stillness", "dur": 300, "flex": true, "bell": true, "lines": [[3, "still_intro"], ["50%", "still_check"]],
    "read": "Face slightly up, a mild focus between the eyebrows. Ignore whatever the mind and body do, and simply sit. One brief check-in halfway."},
   {"key": "close", "name": "Close", "dur": 30, "bell": true, "lines": [[3, "close"]],
    "read": "Take your time, then open the eyes very slowly."}
  ],
  "silent": [
-  {"key": "breath", "name": "Breath and thought", "dur": "breath",
+  {"key": "breath", "name": "Breath and thought", "dur": 420, "flex": true,
    "read": "A bell starts it. Inhale: “I am not the body.” Exhale: “I am not even the mind.” No voice, no check-ins."},
   {"key": "aaa", "name": "Aaah, seven times", "dur": 80, "bell": true, "lines": [[1, "aaa_short"]],
    "read": "A bell and a three-word cue. Seven long “Aaah”s from just below the navel; count them yourself."},
-  {"key": "still", "name": "Stillness", "dur": "still", "bell": true,
+  {"key": "still", "name": "Stillness", "dur": 300, "flex": true, "bell": true,
    "read": "A bell. Face slightly up, a mild focus between the eyebrows. Simply sit. Three bells end it."}
  ],
  "say": {

@@ -29,22 +29,22 @@
  "guided": [
   {"key": "arrive", "name": "Arrive", "dur": 40, "lines": [[2, "arrive"]],
    "read": "Sit upright, still and comfortable. Eyes closed."},
-  {"key": "anapana", "name": "Breath at the nose", "dur": 300, "lines": [[1, "anapana_1"], [150, "anapana_2"]],
+  {"key": "anapana", "name": "Breath at the nose", "dur": 300, "flex": true, "lines": [[1, "anapana_1"], [150, "anapana_2"]],
    "read": "Feel the natural breath where it touches the small area below the nose. Just know it coming in and going out."},
-  {"key": "scan", "name": "The scan", "dur": 600, "bell": true,
+  {"key": "scan", "name": "The scan", "dur": 600, "flex": true, "bell": true,
    "lines": [[3, "scan_1"], [70, "scan_2"], [190, "scan_3"], [330, "scan_4"], [450, "scan_5"]],
    "read": "From the top of the head down to the toes, then back up, part by part, noticing sensations without reacting to them."},
-  {"key": "equal", "name": "The whole body", "dur": 180, "bell": true, "lines": [[3, "equal"]],
+  {"key": "equal", "name": "The whole body", "dur": 180, "flex": true, "bell": true, "lines": [[3, "equal"]],
    "read": "Rest with the whole body at once. Whatever arises will pass."},
   {"key": "close", "name": "Sharing", "dur": 60, "bell": true, "lines": [[3, "close"]],
    "read": "Share what you've cultivated: may all beings be happy, peaceful and free."}
  ],
  "silent": [
-  {"key": "anapana", "name": "Breath at the nose", "dur": 300,
+  {"key": "anapana", "name": "Breath at the nose", "dur": 300, "flex": true,
    "read": "A bell starts it. The natural breath at the small area below the nose."},
-  {"key": "scan", "name": "The scan", "dur": 600, "bell": true,
+  {"key": "scan", "name": "The scan", "dur": 600, "flex": true, "bell": true,
    "read": "A bell. Head to toe and back, part by part, without reacting."},
-  {"key": "equal", "name": "The whole body", "dur": 180, "bell": true,
+  {"key": "equal", "name": "The whole body", "dur": 180, "flex": true, "bell": true,
    "read": "A bell. Rest with the whole body at once. Three bells end it."}
  ],
  "say": {

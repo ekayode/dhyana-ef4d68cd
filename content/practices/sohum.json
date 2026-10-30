@@ -33,7 +33,7 @@
    "pattern": [["in", 4, "so"], ["out", 5, "hum"]], "guideUntil": 82, "paceUntil": 82,
    "lines": [[1, "teach"], [82, "own"]],
    "read": "“So” on the in-breath, “Hum” on the out-breath. The guru breathes it with you for about a minute."},
-  {"key": "sit", "name": "Meditation", "dur": 600, "bell": true,
+  {"key": "sit", "name": "Meditation", "dur": 600, "flex": true, "bell": true,
    "every": {"from": 200, "step": 200, "keys": ["check_1", "check_2"], "endGap": 120},
    "read": "Ten minutes with the mantra on the breath. Two light check-ins from the guru."},
   {"key": "rest", "name": "Resting", "dur": 60, "bell": true, "lines": [[3, "rest"]],
@@ -42,7 +42,7 @@
    "read": "Gently open the eyes."}
  ],
  "silent": [
-  {"key": "sit", "name": "Meditation", "dur": 600,
+  {"key": "sit", "name": "Meditation", "dur": 600, "flex": true,
    "read": "A bell starts it. “So” on the in-breath, “Hum” on the out-breath. Three bells end it."}
  ],
  "say": {

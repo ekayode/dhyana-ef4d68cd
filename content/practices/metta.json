@@ -39,17 +39,17 @@
  "guided": [
   {"key": "arrive", "name": "Arrive", "dur": 40, "lines": [[2, "arrive"]],
    "read": "Sit comfortably and soften the face. A hand on the heart, if you like."},
-  {"key": "self", "name": "Yourself", "dur": 180, "lines": [[1, "self_1"], [80, "self_2"], [140, "self_3"]],
+  {"key": "self", "name": "Yourself", "dur": 180, "flex": true, "lines": [[1, "self_1"], [80, "self_2"], [140, "self_3"]],
    "read": "The four phrases, offered to yourself: may I be safe, happy, healthy, and live with ease."},
-  {"key": "focus", "name": "Today: {label}", "dur": 300, "lines": [[1, "focus"], [150, "focus_2"]],
+  {"key": "focus", "name": "Today: {label}", "dur": 300, "flex": true, "lines": [[1, "focus"], [150, "focus_2"]],
    "read": "The same four phrases, offered to {who}. Repeat them quietly at your own pace."},
-  {"key": "wide", "name": "Widening", "dur": 270, "bell": true, "lines": [[3, "wide"], ["55%", "rest"]],
+  {"key": "wide", "name": "Widening", "dur": 270, "flex": true, "bell": true, "lines": [[3, "wide"], ["55%", "rest"]],
    "read": "The circle widens to everyone. Then the words fall away, and you rest in whatever feeling is there."},
   {"key": "close", "name": "Close", "dur": 30, "bell": true, "lines": [[3, "close"]],
    "read": "Gently come back."}
  ],
  "silent": [
-  {"key": "sit", "name": "Loving-kindness", "dur": 720,
+  {"key": "sit", "name": "Loving-kindness", "dur": 720, "flex": true,
    "read": "Yourself, then {who}, then everyone: may you be safe, happy, healthy, and live with ease. At your own pace."}
  ],
  "say": {
