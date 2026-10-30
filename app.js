@@ -65,7 +65,7 @@ function progress(p){
   const sat=Object.keys(log).length,full=Object.values(log).filter(n=>n>=c.perDay).length,day=sat+(today?0:1);
   const complete=full>=c.days;
   const status=c.perDay>1?` · ${Math.min(today,c.perDay)} of ${c.perDay} sits today`:today?" · done today":"";
-  return {id,c,day,today,complete,dayIndex:p.days?(day-1)%p.days.length:null,
+  return {id,c,day,today,complete,full,dayIndex:p.days?(day-1)%p.days.length:null,
     label:complete?`Cycle complete · ${c.days} days`:`Day ${Math.min(day,c.days)} of ${c.days}${status}`,
     short:complete?"Cycle complete":`Day ${Math.min(day,c.days)} of ${c.days}`};
 }
@@ -75,7 +75,8 @@ const minLabel=s=>{const m=s/60;return (Number.isInteger(m)?m:Math.floor(m)+(m%1
 function dateKey(){const n=new Date();return n.getFullYear()+"-"+(n.getMonth()+1)+"-"+n.getDate()}
 function readCount(){try{return +(localStorage.getItem("sp-"+dateKey())||0)}catch(e){return 0}}
 function addCount(){try{localStorage.setItem("sp-"+dateKey(),readCount()+1)}catch(e){} showCount()}
-function showCount(){const n=readCount();$("count").textContent=n?`${n} session${n>1?"s":""} today`:"No session yet today"}
+function showCount(){const n=readCount();$("count").textContent=n?`${n} session${n>1?"s":""} today`:""}
+function greet(){const h=new Date().getHours();$("hello").textContent=h<5?"Good night":h<12?"Good morning":h<18?"Good afternoon":"Good evening"}
 function savePrefs(){try{localStorage.setItem("sp-prefs",JSON.stringify(prefs))}catch(e){}}
 function syncToggles(){const can=!!CLIPS||canSpeak;$("tVoice").setAttribute("aria-pressed",prefs.voice&&can);$("tTones").setAttribute("aria-pressed",prefs.tones);
   if(!can){$("tVoice").disabled=true;$("voiceNote").textContent="Voice guidance isn't available on this device. You'll get bells and breath tones only."}}
@@ -94,39 +95,38 @@ const facts=rows=>$("facts").innerHTML=rows.map(([k,v])=>`<dt>${esc(k)}</dt><dd>
 function selectDay(i){cur=i;render()}
 function render(){
   const p=P();
-  $("days").hidden=!!p;$("cycle").hidden=!p;$("lenRow").hidden=!(p&&p.lengths);
+  $("days").hidden=!!p;$("cycle").hidden=!p;$("lenRow").hidden=!(p&&p.lengths);$("progWrap").hidden=!p;
   document.querySelectorAll("[data-only]").forEach(el=>el.hidden=el.dataset.only!==(p?"other":"chakras"));
   renderPractices();
   let full,quiet,lede;
   if(p){
     const pr=progress(p);pday=pr.dayIndex;const day=pday!=null?p.days[pday]:null;
     document.documentElement.style.setProperty("--chakra",p.c);
-    $("poolEyebrow").textContent=pr.label+(day?` · ${day.label}`:"");
-    $("poolTitle").innerHTML=p.title;
+    $("poolEyebrow").textContent=pr.label;
+    $("poolTitle").innerHTML=p.title;$("heroSub").textContent=day?`${p.tagline||p.sub} · today, ${day.label.toLowerCase()}`:p.sub;
+    $("progBar").style.width=Math.min(100,pr.full/pr.c.days*100)+"%";$("progNote").textContent=`${pr.full} of ${pr.c.days} days · ${pr.c.label.split(" · ")[1]||pr.c.label}`;
     facts(p.facts);$("release").textContent=(day&&day.release)||p.release;
     $("teach").innerHTML=`<b>Guidelines</b><ul>${p.guidelines.map(g=>`<li>${g}</li>`).join("")}</ul>`;
-    $("barNote").textContent=`${p.short} · ${pr.short}`;
-    $("cycleChips").innerHTML=Object.entries(p.cycles).map(([id,c])=>`<button class="chip" data-cycle="${id}" aria-pressed="${pr.id===id}">${esc(c.label)}</button>`).join("")
-      +`<button class="chip" id="restart">Start over</button>`;
+    $("cycleChips").innerHTML=Object.entries(p.cycles).map(([id,c])=>`<button data-cycle="${id}" aria-pressed="${pr.id===id}">${esc(c.label.replace(" · ",", "))}</button>`).join("");
     $("cycleNote").textContent=p.cycleNote||"The day count goes up each day you sit; a missed day doesn't reset it.";
     if(p.lengths)$("lenChips").innerHTML=Object.entries(p.lengths).map(([id,L])=>
       `<button class="chip" data-len="${id}" aria-pressed="${lenVars(p)===L}">${esc(L.label)} · ${minLabel(build(p,p.guided,L).reduce((a,s)=>a+s.dur,0))}</button>`).join("");
     full=build(p,p.guided);quiet=p.silent?build(p,p.silent):null;lede=p.lede;
   }else{
     pday=null;const d=DAYS[cur];document.documentElement.style.setProperty("--chakra",d.c);renderDays();
-    $("poolEyebrow").textContent=`${cur===todayIdx?"Today · ":""}${d.short} · ${d.skt}`;
-    $("poolTitle").innerHTML=`The <em>${d.el}</em> pool`;
+    $("poolEyebrow").textContent=`${cur===todayIdx?"Today · ":""}${d.short}`;
+    $("poolTitle").innerHTML=`The <em>${d.el}</em> pool`;$("heroSub").textContent=`${d.skt} · ${d.where}`;
     facts([["Where",d.where],["Deals with",d.deals],["Blocked by",d.block],["Silent sound",d.bija]]);
     $("release").textContent=d.release;
     $("teach").innerHTML=`<b>If you teach this</b>${d.teach}`;
-    $("barNote").textContent=`${d.el} · ${d.where.split(",")[0]}`;
     full=SEGS(d);quiet=SILENT(d);lede=LEDE;
   }
   segs=guided()?full:quiet;done=false;drawClock();
   $("mGuided").setAttribute("aria-pressed",guided());$("mSilent").setAttribute("aria-pressed",!guided());
   $("mGuided").textContent=`Guided · ${minLabel(full.reduce((a,s)=>a+s.dur,0))}`;
-  $("mSilent").hidden=!quiet;if(quiet)$("mSilent").textContent=`No guidance · ${minLabel(quiet.reduce((a,s)=>a+s.dur,0))}`;
+  $("modeRow").hidden=!quiet;if(quiet)$("mSilent").textContent=`No guidance · ${minLabel(quiet.reduce((a,s)=>a+s.dur,0))}`;
   $("lede").textContent=guided()?lede.guided:lede.silent;$("begin").textContent=`Begin · ${minLabel(total())}`;
+  $("flowMeta").textContent=`${segs.length} step${segs.length>1?"s":""} · ${minLabel(total())}`;
   $("steps").innerHTML=segs.map((s,k)=>`<li><span class="n">${k+1}</span><span class="t">${esc(s.name)}</span><span class="m">${fmtDur(s.dur)}</span>${s.q?`<span class="d">${s.pre}</span><span class="q">“${s.read}”</span><span class="hear">Hold it lightly as your intention for the sit.</span>`:`<span class="d">${s.read}</span>`}</li>`).join("");
 }
 
@@ -275,11 +275,13 @@ $("test").onclick=()=>{ac();loadClips(["common-test"]);bell(1);setTimeout(()=>to
 $("days").onclick=e=>{const b=e.target.closest(".day");if(b)selectDay(+b.dataset.i)};
 $("practices").onclick=e=>{const b=e.target.closest(".prac");if(!b)return;prefs.practice=b.dataset.id;savePrefs();
   if(prefs.practice==="chakras")cur=todayIdx;render()};
-$("cycleChips").onclick=e=>{const p=P(),b=e.target.closest("button");if(!p||!b)return;const s=progLoad(p);
-  if(b.id==="restart"){if(!confirm(`Start ${p.name} over from day 1? Your sits so far will be cleared.`))return;s.log={}}
-  else s.cycle=b.dataset.cycle;
-  progSave(p,s);render()};
+$("cycleChips").onclick=e=>{const p=P(),b=e.target.closest("[data-cycle]");if(!p||!b)return;const s=progLoad(p);s.cycle=b.dataset.cycle;progSave(p,s);render()};
+$("restart").onclick=()=>{const p=P();if(!p||!confirm(`Start ${p.name} over from day 1? Your sits so far will be cleared.`))return;
+  const s=progLoad(p);s.log={};progSave(p,s);render()};
 $("lenChips").onclick=e=>{const p=P(),b=e.target.closest("[data-len]");if(!p||!b)return;prefs.len[p.id]=b.dataset.len;savePrefs();render()};
+$("openSettings").onclick=()=>{const d=$("settings");d.showModal?d.showModal():d.setAttribute("open","")};
+$("closeSettings").onclick=()=>$("settings").close();
+$("settings").onclick=e=>{if(e.target===$("settings"))$("settings").close()}; // tap outside the sheet
 const setMode=m=>{prefs.mode=m;savePrefs();render()};
 $("mGuided").onclick=()=>setMode("guided");
 $("mSilent").onclick=()=>setMode("silent");
@@ -296,7 +298,7 @@ Promise.all([
   practices.forEach(p=>PR[p.id]=p);ORDER=practices.map(p=>p.id);
   if(prefs.practice!=="chakras"&&!PR[prefs.practice])prefs.practice="chakras";
   todayIdx=DAYS.findIndex(d=>d.dow===new Date().getDay());cur=todayIdx;
-  showCount();syncToggles();render();
+  greet();showCount();syncToggles();render();
 });
 
 if(!standalone&&/iPhone|iPad|iPod/.test(navigator.userAgent))$("install").classList.add("show");

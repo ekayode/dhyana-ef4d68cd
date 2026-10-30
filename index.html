@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Seven Pools</title>
 <meta name="description" content="Daily meditation: the seven chakras, Yoga Nidra, Isha Kriya, metta, body scan, So Hum and candle gazing.">
-<meta name="theme-color" content="#eef0f3" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0f1219" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f1ea" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f1115" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Seven Pools">
@@ -16,96 +16,109 @@
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Karla:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
 <div class="wrap">
-  <header>
-    <div><div class="eyebrow">Daily sit · guided or not</div><h1>Seven Pools</h1></div>
-    <div id="count"></div>
+  <header class="top">
+    <div>
+      <p class="hello" id="hello">Welcome</p>
+      <h1>Seven Pools</h1>
+    </div>
+    <button class="iconbtn" id="openSettings" aria-label="Sound and tips">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+    </button>
   </header>
 
-  <div class="install" id="install"><b>Put this on your home screen.</b> In Safari, tap Share, then <b>Add to Home Screen</b>. It opens full-screen, works offline, and plays sound with the silent switch on.</div>
+  <div class="install" id="install"><b>Add it to your home screen.</b> In Safari, tap Share, then Add to Home Screen. It opens full-screen, works offline, and plays sound with the silent switch on.</div>
 
   <nav class="practices" id="practices" aria-label="Choose a practice"></nav>
 
+  <!-- Today: the one thing to look at. -->
+  <section class="hero" aria-labelledby="poolTitle">
+    <div class="heroTop"><span class="pill" id="poolEyebrow"></span><span class="count" id="count"></span></div>
+    <h2 id="poolTitle"></h2>
+    <p class="heroSub" id="heroSub"></p>
+    <div class="heroFoot">
+      <div class="dial">
+        <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="track" cx="60" cy="60" r="54"/><circle class="prog" id="ringProg" cx="60" cy="60" r="54"/></svg>
+        <div class="time" id="clockTime">12:00</div>
+      </div>
+      <div class="heroInfo">
+        <div id="clockSub"></div>
+        <div class="progress" id="progWrap"><div class="track"><i id="progBar"></i></div><small id="progNote"></small></div>
+      </div>
+    </div>
+  </section>
+
   <nav class="days" id="days" aria-label="Choose a day"></nav>
 
-  <section class="pool">
-    <div class="eyebrow" id="poolEyebrow"></div>
-    <h2 id="poolTitle"></h2>
+  <section class="opts" aria-label="Session options">
+    <div class="opt" id="modeRow">
+      <span class="label">Session</span>
+      <div class="seg"><button id="mGuided" aria-pressed="true">Guided</button><button id="mSilent" aria-pressed="false">No guidance</button></div>
+    </div>
+    <div class="opt" id="lenRow" hidden><span class="label">Length</span><div class="seg" id="lenChips"></div></div>
+    <div class="opt" id="cycle" hidden>
+      <span class="label">Cycle</span>
+      <div class="seg" id="cycleChips"></div>
+      <p class="note"><span id="cycleNote"></span> <button class="link" id="restart">Start over</button></p>
+    </div>
+  </section>
+
+  <details class="card" id="flow">
+    <summary><span>What happens</span><small id="flowMeta"></small></summary>
+    <p class="lede" id="lede"></p>
+    <ol class="steps" id="steps"></ol>
+  </details>
+
+  <details class="card">
+    <summary><span>About this practice</span></summary>
     <dl class="facts" id="facts"></dl>
     <p class="release" id="release"></p>
-  </section>
+    <div class="teach" id="teach"></div>
+  </details>
 
-  <section class="cycle" id="cycle" hidden aria-label="Cycle">
-    <div class="eyebrow">Cycle</div>
-    <div class="toggles" id="cycleChips"></div>
-    <p class="note" id="cycleNote"></p>
-  </section>
+  <p class="credit">Voice by <a href="https://elevenlabs.io" target="_blank" rel="noopener">ElevenLabs</a></p>
+</div>
 
-  <section class="clock" aria-label="Session countdown">
-    <div class="dial">
-      <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="track" cx="60" cy="60" r="54"/><circle class="prog" id="ringProg" cx="60" cy="60" r="54"/></svg>
-      <div class="time" id="clockTime">12:00</div>
-    </div>
-    <div id="clockSub"></div>
-  </section>
+<div class="bar"><button class="begin" id="begin">Begin</button></div>
 
-  <section class="mode" aria-label="Session type">
-    <div class="eyebrow">Session</div>
-    <div class="toggles">
-      <button class="chip" id="mGuided" aria-pressed="true">Guided</button>
-      <button class="chip" id="mSilent" aria-pressed="false">No guidance</button>
-    </div>
-    <div id="lenRow" hidden><div class="eyebrow">Length</div><div class="toggles" id="lenChips"></div></div>
-  </section>
-
-  <section class="steps">
-    <h3>Read this before you sit</h3>
-    <p class="lede" id="lede"></p>
-    <ol id="steps"></ol>
-  </section>
-
-  <section class="sound">
-    <div class="eyebrow">Sound check</div>
-    <div class="toggles">
+<dialog id="settings" aria-labelledby="settingsTitle">
+  <div class="sheet">
+    <div class="sheetHead"><h3 id="settingsTitle">Sound</h3><button class="iconbtn" id="closeSettings" aria-label="Close">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="chips">
       <button class="chip" id="tVoice" aria-pressed="true">Voice guide</button>
       <button class="chip" id="tTones" aria-pressed="true">Breath tones</button>
       <button class="chip" id="test">Test sound</button>
     </div>
-    <p id="voiceNote">Set your volume with Test sound.</p>
-  </section>
-
-  <section class="notes">
-    <h3>Habits that help</h3>
-    <ul>
-      <li>Decide the night before: same spot, same time. In the morning, open the app, read for one minute, press Begin, and set the phone face down.</li>
-      <li>You get 10 seconds after Begin to put the phone down and settle. A bell starts the session; three bells end it.</li>
+    <p class="note" id="voiceNote">Set your volume with Test sound.</p>
+    <h3>Tips</h3>
+    <ul class="tips">
+      <li>Same spot, same time. Open the app, read for a minute, press Begin, and set the phone face down.</li>
+      <li>You get 10 seconds after Begin to settle. A bell starts the session; three bells end it.</li>
       <li>Tap the black screen once to pause or end.</li>
       <li>Don't lock the phone during the sit. The screen stays on but black so the timing keeps working. If it locks or you switch apps, the session pauses where you left it.</li>
       <li data-only="chakras">Sit on the cushion by default. Kneel if your hips are tight. Lie down only when tired, and on Fire day swap the pumping breath for slow belly breaths.</li>
       <li data-only="chakras">Sitting again later? Repeat the same day.</li>
       <li data-only="chakras">If the intention question brings up something heavy, let it be there and return to the breath. You don't need to solve it on the cushion.</li>
     </ul>
-    <div class="teach" id="teach"></div>
-    <p class="credit">Voice by <a href="https://elevenlabs.io" target="_blank" rel="noopener">ElevenLabs</a></p>
-  </section>
-</div>
-
-<div class="bar"><div class="in"><small id="barNote"></small><button class="begin" id="begin">Begin · 12½ min</button></div></div>
+  </div>
+</dialog>
 
 <div id="sit" hidden>
   <div id="sitLive">
     <div class="dial sitDial">
+      <i class="glow" aria-hidden="true"></i>
       <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="track" cx="60" cy="60" r="54"/><circle class="prog" id="sitRing" cx="60" cy="60" r="54"/></svg>
       <div class="time" id="sitClock">12:00</div>
     </div>
     <div class="big step" id="sitStep"></div>
     <div class="small" id="sitSub"></div>
-    <div class="small">Eyes closed · tap once to pause</div>
+    <div class="small hint">Eyes closed · tap once to pause</div>
   </div>
   <div id="paused" hidden>
     <p id="pausedNote">Paused</p>
