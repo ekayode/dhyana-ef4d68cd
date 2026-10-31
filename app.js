@@ -46,10 +46,11 @@ const LEDE={
 // shrink: the step may get shorter for a short session, but never takes extra time.
 // Only flexible steps change length; their check-ins and cues spread out in proportion, and the spoken guidance stays as it is.
 const TIMES=[5,10,15,20,30,45,60,90,120]; // minutes offered besides each practice's default
-function speechSecs(keys){return keys.reduce((a,k)=>{const m=CLIPS&&(k==="in"||k==="out"?null:CLIPS.clips[clipId(k)]);return a+(m&&m.dur||8)+GAP},0)}
-// The shortest a flexible step can be: room for all its spoken cues plus a little quiet, and never shorter than its guided breathing.
+function speechSecs(keys){return keys.reduce((a,k)=>{const id=k==="in"||k==="out"?null:clipId(k),m=CLIPS&&id&&CLIPS.clips[id],pace=id&&paceOf(id);
+  return a+(m&&m.dur||8)*(pace&&pace.slower||1)+(pace&&pace.gap!=null?pace.gap:GAP)},0)}
+// The shortest a flexible step can be: room for all its spoken cues plus a little quiet (minQuiet; otherwise 20s, and at least 45s overall), and never shorter than its guided breathing.
 function minDur(s){if(!s.dur)return 0;
-  let m=Math.max(45,speechSecs((s.lines||[]).flatMap(l=>l.slice(1)))+20);
+  let m=s.minQuiet!=null?speechSecs((s.lines||[]).flatMap(l=>l.slice(1)))+s.minQuiet:Math.max(45,speechSecs((s.lines||[]).flatMap(l=>l.slice(1)))+20);
   if(s.guideUntil!=null)m=Math.max(m,s.guideUntil+20);return Math.min(m,s.dur)}
 // Durations for each step so the session lasts target seconds, or null if it can't be that short.
 function fitDurs(list,target){
@@ -270,8 +271,31 @@ function sessionClipIds(){const common=Object.keys(DATA.common).map(k=>"common-"
   if(!p){const d=DAYS[cur];return [...common,...Object.keys(d.say).map(k=>`${d.short.toLowerCase()}-${k}`)]}
   return [...common,...Object.keys(p.say).map(k=>`${p.id}-${k}`),...(pday!=null?Object.keys(p.days[pday].say||{}).map(k=>`${p.id}-d${pday+1}-${k}`):[])]}
 function loadClips(ids){if(!CLIPS)return;const c=ac();if(!c)return;
-  ids.forEach(id=>{const meta=CLIPS.clips[id];if(!meta||buffers[id])return;buffers[id]="loading";
-    fetch("audio/"+meta.file).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(b=>c.decodeAudioData(b)).then(buf=>buffers[id]=buf).catch(()=>{delete buffers[id]})})}
+  ids.forEach(id=>{const meta=CLIPS.clips[id];if(!meta||buffers[id])return;buffers[id]="loading";const pace=paceOf(id);
+    fetch("audio/"+meta.file).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(b=>c.decodeAudioData(b))
+      .then(buf=>buffers[id]=pace?paced(buf,pace,c):buf).catch(()=>{delete buffers[id]})})}
+// Pacing. The voice model keeps its pauses short (about half a second) whatever the script says, which feels hurried in slow practices.
+// A practice with "pace": {pause, stretch, gap} gets its recordings reshaped as they load: every natural pause lasts at least `pause`
+// seconds (longer ones grow by `stretch`), the silence at each end is trimmed, and lines are separated by exactly `gap` seconds.
+const paceOf=id=>{const p=PR[id.split("-")[0]];return p&&p.pace||null};
+function paced(buf,pace,c){
+  const sr=buf.sampleRate,win=Math.round(sr*.02),d=buf.getChannelData(0),n=Math.floor(d.length/win),rms=new Float32Array(n);
+  for(let w=0;w<n;w++){let s=0;for(let j=w*win,e=j+win;j<e;j++)s+=d[j]*d[j];rms[w]=Math.sqrt(s/win)}
+  let peak=0;for(const v of rms)peak=Math.max(peak,v);const th=Math.max(peak*.04,.004);
+  let first=0,last=n-1;while(first<n&&rms[first]<=th)first++;while(last>first&&rms[last]<=th)last--;
+  if(first>=last)return buf;
+  // Pieces to copy: [start, end) in samples, then extra silence to add after each piece.
+  const pieces=[];let from=Math.max(0,first-2)*win,run=0;
+  for(let w=first;w<=last;w++){
+    if(rms[w]<=th){run++;continue}
+    if(run*.02>=.3){const want=Math.max(pace.pause,run*.02*(pace.stretch||1)),extra=Math.round((want-run*.02)*sr),mid=(w-Math.ceil(run/2))*win;
+      pieces.push([from,mid,extra]);from=mid}
+    run=0}
+  pieces.push([from,Math.min(d.length,(last+6)*win),0]);
+  const len=pieces.reduce((a,[s,e,x])=>a+(e-s)+x,0),out=c.createBuffer(buf.numberOfChannels,len,sr);
+  for(let ch=0;ch<buf.numberOfChannels;ch++){const src=buf.getChannelData(ch),dst=out.getChannelData(ch);let o=0;
+    for(const [s,e,x] of pieces){dst.set(src.subarray(s,e),o);o+=e-s+x}}
+  return out}
 let deviceVoice=null;
 function pickVoice(){if(!canSpeak)return;const vs=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang));
   deviceVoice=vs.find(v=>/Samantha|Daniel|Google UK English Male|Karen|Moira|Serena/i.test(v.name))||vs[0]||null}
@@ -296,7 +320,8 @@ function speak(ids){voiceQ.push(...ids);if(!speaking)nextLine()}
 function nextLine(){
   const id=voiceQ.shift();
   if(!id){speaking=false;onVoiceIdle();return}
-  speaking=true;curLine=id;playClip(id,()=>{curLine=null;gapTimer=setTimeout(nextLine,GAP*1000)});
+  const pace=paceOf(id),gap=pace&&pace.gap!=null?pace.gap:GAP;
+  speaking=true;curLine=id;playClip(id,()=>{curLine=null;gapTimer=setTimeout(nextLine,gap*1000)});
 }
 // Pausing keeps the interrupted line and everything queued after it, so Resume can pick up where the guru left off.
 function holdVoice(){heldLines=[...(curLine?[curLine]:[]),...voiceQ];stopVoice()}
