@@ -5,6 +5,7 @@ A daily meditation app, installable from the home screen. (It began as "Seven Po
 ## Files
 
 - `content/days.json`: the seven chakras (days, breaths, questions, seals).
+- `content/daily.json`: the Today tab's quotes and intentions, one per day in a fixed rotation. Add or edit entries freely.
 - `content/practices.json` and `content/practices/<id>.json`: every other practice. Each file holds its facts, cycles, the steps for Guided and No guidance, and every spoken line. Steps marked `flex` stretch or shrink when someone picks a different time (5 min to 2 hours); the rest keep their length. A new practice is a new file plus its id in `practices.json` and in `PRACTICES` in `sw.js`.
 - `app.js`: screens, session timing, bells, breath tones, voice cues.
 - `styles.css`, `index.html`: layout.

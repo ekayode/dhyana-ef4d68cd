@@ -2,10 +2,13 @@
    Practices: the seven chakras (content/days.json, one pool per weekday) plus the practices listed in content/practices.json,
    each described entirely by its own file in content/practices/. Recorded voice from audio/clips.json. */
 const $=id=>document.getElementById(id);
-let DATA=null, DAYS=[], SETTLE=10, todayIdx=0, CLIPS=null, PR={}, ORDER=[], pday=null;
+let DATA=null, DAYS=[], SETTLE=10, todayIdx=0, CLIPS=null, PR={}, ORDER=[], pday=null, QUOTES=[];
 let cur=0, segs=[], segI=-1, segElapsed=0, running=false, inSession=false, done=false, last=0, timer=null, wake=null, ctx=null, lastPhase=-1, tickAcc=0;
-const prefs={voice:true,tones:true,mode:"guided",practice:"chakras",time:{}}; // mode: guided | silent; time: chosen minutes per practice (0 = default)
+// mode: guided | silent. time: minutes chosen on Home per practice (0 = the practice's own length). defTime: the Settings default for every practice.
+// goal: days per week. settle: seconds after Begin (null = the content default). theme: auto | light | dark.
+const prefs={voice:true,tones:true,mode:"guided",practice:"chakras",time:{},defTime:0,goal:5,settle:null,theme:"auto"};
 try{const p=JSON.parse(localStorage.getItem("sp-prefs")||"{}");Object.assign(prefs,p);delete prefs.len;prefs.time=prefs.time||{}}catch(e){}
+document.documentElement.dataset.theme=prefs.theme==="auto"?"":prefs.theme;if(prefs.theme==="auto")delete document.documentElement.dataset.theme;
 const canSpeak="speechSynthesis" in window;
 const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
 const P=()=>PR[prefs.practice]||null; // the current practice file; null means the seven chakras
@@ -76,6 +79,7 @@ function shape(list,target,fill=t=>t){
       guideUntil:s.guideUntil!=null?g(s.guideUntil):undefined,paceUntil:s.paceUntil!=null?g(s.paceUntil):undefined};
   }).filter(s=>s.dur>0);
 }
+const effTime=()=>{const t=prefs.time[prefs.practice];return t!=null?t:prefs.defTime||0}
 const timeLabel=m=>m<60?`${m} min`:`${String(m/60).replace(".5","½")} hr`;
 const hasSilent=()=>{const p=P();return p?!!p.silent:true};
 const guided=()=>prefs.mode!=="silent"||!hasSilent();
@@ -116,8 +120,12 @@ function streak(h=histLoad()){const d=new Date();if(!h[keyOf(d)])d.setDate(d.get
 const pColor=id=>id==="chakras"?"#c2413a":(PR[id]&&PR[id].c)||"#888";
 const pName=id=>id==="chakras"?"Seven chakras":(PR[id]&&PR[id].name)||id;
 function readCount(){return (histLoad()[dateKey()]||[]).length}
-function showCount(){const n=readCount(),st=streak();
-  $("count").textContent=st>1?`${st}-day streak`:n?`${n} session${n>1?"s":""} today`:""}
+// Days with a sit this week, Monday to today.
+function weekDays(h=histLoad()){const d=new Date(),back=(d.getDay()+6)%7;let n=0;for(let i=0;i<=back;i++){const x=new Date(d);x.setDate(d.getDate()-i);if(h[keyOf(x)])n++}return n}
+function showCount(){const h=histLoad(),st=streak(h),wk=weekDays(h),parts=[];
+  if(st>1)parts.push(`${st}-day streak`);if(prefs.goal)parts.push(`${Math.min(wk,prefs.goal)} of ${prefs.goal} this week`);
+  else if(readCount())parts.push(`${readCount()} today`);
+  $("count").textContent=parts.join(" · ")}
 
 let calMonth=new Date();calMonth.setDate(1);let calSel=null;
 function renderCal(){
@@ -130,7 +138,10 @@ function renderCal(){
     const dots=list.slice(0,3).map(e=>`<i style="background:${pColor(e[0])}"></i>`).join("");
     cells+=`<button class="cday${list.length?" sat":""}${k===today?" now":""}${k===calSel?" sel":""}" data-k="${k}" style="--c:${list.length?pColor(list[0][0]):"transparent"}" aria-label="${d}${list.length?`, ${list.length} sit${list.length>1?"s":""}`:""}">${d}<b>${dots}</b></button>`}
   $("calGrid").innerHTML=cells;
-  $("calStats").innerHTML=`<div><b>${streak(h)}</b><small>day streak</small></div><div><b>${sat}</b><small>days this month</small></div><div><b>${Math.round(mins)}</b><small>minutes</small></div>`;
+  const wk=weekDays(h),g=prefs.goal;
+  $("calStats").innerHTML=`<div><b>${streak(h)}</b><small>day streak</small></div><div><b>${sat}</b><small>days this month</small></div><div><b>${Math.round(mins)}</b><small>minutes this month</small></div>`;
+  $("goalWrap").hidden=!g;if(g){$("goalBar").style.width=Math.min(100,wk/g*100)+"%";
+    $("goalNote").textContent=wk>=g?`Weekly goal met: ${wk} of ${g} days. Lovely.`:`This week: ${wk} of ${g} days. ${g-wk} to go.`}
   const sel=calSel&&h[calSel];
   $("calDay").textContent=sel?`${new Date(calSel.replace(/-/g,"/")).toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"})}: ${sel.map(e=>pName(e[0])+(e[1]?` · ${minLabel(e[1]*60)}`:"")).join(", ")}`:
     sits?"Tap a day to see what you practised.":"Days you sit will light up here.";
@@ -185,7 +196,7 @@ function render(){
     rawFull=SEGS(d);rawQuiet=SILENT(d);lede=LEDE;
   }
   // The chosen time applies to both modes where it fits; otherwise that mode uses its default.
-  const want=(prefs.time[prefs.practice]||0)*60,fit=list=>shape(list,want&&fitDurs(list,want)?want:0,fill);
+  const want=effTime()*60,fit=list=>shape(list,want&&fitDurs(list,want)?want:0,fill);
   const full=fit(rawFull),quiet=rawQuiet?fit(rawQuiet):null,act=guided()?rawFull:rawQuiet;
   const def=act.reduce((a,s)=>a+s.dur,0),sel=want&&fitDurs(act,want)?want/60:0;
   $("timeChips").innerHTML=[`<button data-time="0" aria-pressed="${!sel}">Default · ${minLabel(def)}</button>`,
@@ -350,19 +361,67 @@ $("cycleChips").onclick=e=>{const p=P(),b=e.target.closest("[data-cycle]");if(!p
 $("restart").onclick=()=>{const p=P();if(!p||!confirm(`Start ${p.name} over from day 1? Your sits so far will be cleared.`))return;
   const s=progLoad(p);s.log={};progSave(p,s);render()};
 $("timeChips").onclick=e=>{const b=e.target.closest("[data-time]");if(!b)return;prefs.time[prefs.practice]=+b.dataset.time;savePrefs();render()};
-const openSheet=d=>d.showModal?d.showModal():d.setAttribute("open","");
-$("openCal").onclick=()=>{calMonth=new Date();calMonth.setDate(1);calSel=null;renderCal();openSheet($("calendar"))};
-$("closeCal").onclick=()=>$("calendar").close();
-$("calendar").onclick=e=>{if(e.target===$("calendar"))$("calendar").close()};
 $("calPrev").onclick=()=>{calMonth.setMonth(calMonth.getMonth()-1);renderCal()};
 $("calNext").onclick=()=>{calMonth.setMonth(calMonth.getMonth()+1);renderCal()};
 $("calGrid").onclick=e=>{const b=e.target.closest(".cday");if(b){calSel=b.dataset.k;renderCal()}};
 $("shareWeek").onclick=async()=>{const text=weekSummary();
   try{if(navigator.share){await navigator.share({text});return}}catch(e){if(e.name==="AbortError")return}
   try{await navigator.clipboard.writeText(text);$("shareWeek").textContent="Copied. Paste it to a friend";setTimeout(()=>$("shareWeek").textContent="Share my week",2500)}catch(e){}};
-$("openSettings").onclick=()=>{const d=$("settings");d.showModal?d.showModal():d.setAttribute("open","")};
-$("closeSettings").onclick=()=>$("settings").close();
-$("settings").onclick=e=>{if(e.target===$("settings"))$("settings").close()}; // tap outside the sheet
+/* ---------- pages: Home, Today, Calendar, Settings ---------- */
+const PAGES={home:"pHome",today:"pToday",calendar:"pCal",settings:"pSettings"};
+function go(name){if(!PAGES[name])name="home";
+  for(const [k,id] of Object.entries(PAGES))$(id).hidden=k!==name;
+  document.querySelectorAll(".tabs button").forEach(b=>b.dataset.go===name?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
+  document.body.dataset.page=name;
+  if(name==="today")renderQuote();
+  if(name==="calendar"){calMonth=new Date();calMonth.setDate(1);calSel=null;renderCal()}
+  if(name==="settings")renderSettings();
+  if(name==="home")render();
+  try{history.replaceState(null,"",name==="home"?location.pathname:"#"+name)}catch(e){}
+  scrollTo(0,0)}
+document.querySelector(".tabs").onclick=e=>{const b=e.target.closest("[data-go]");if(b)go(b.dataset.go)};
+
+// Today: one quote and intention per day, the same for everyone on that date.
+const THEME_C={Mindfulness:"#2f8f83",Courage:"#d0782a",Devotion:"#c25a86",Motivation:"#c2413a",Wisdom:"#5b54c9",Patience:"#3f7fb5",Surrender:"#4f7f9f",Compassion:"#c25a86",Gratitude:"#a8772f",Discipline:"#6a6f7a"};
+let qOff=0; // days from today while browsing
+function quoteFor(date){if(!QUOTES.length)return null;const n=Math.floor((Date.UTC(date.getFullYear(),date.getMonth(),date.getDate()))/864e5);
+  return QUOTES[((n*37)%QUOTES.length+QUOTES.length)%QUOTES.length]} // 37 is coprime with the list length, so themes interleave
+function renderQuote(){const d=new Date();d.setDate(d.getDate()+qOff);const q=quoteFor(d);if(!q)return;
+  $("qDate").textContent=qOff===0?d.toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"}):
+    `${qOff<0?"Earlier":"Coming up"} · ${d.toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"})}`;
+  $("pToday").querySelector("h1").textContent=qOff===0?"Today":qOff===-1?"Yesterday":qOff===1?"Tomorrow":d.toLocaleDateString(undefined,{weekday:"long"});
+  $("pToday").style.setProperty("--q",THEME_C[q.theme]||"var(--chakra)");
+  $("qTheme").textContent=q.theme;$("qText").textContent=q.quote;$("qBy").textContent=q.by;$("qIntent").textContent=q.intention;}
+$("qPrev").onclick=()=>{qOff--;renderQuote()};
+$("qNext").onclick=()=>{qOff++;renderQuote()};
+$("qSit").onclick=()=>{qOff=0;go("home")};
+$("qShare").onclick=async()=>{const d=new Date();d.setDate(d.getDate()+qOff);const q=quoteFor(d);if(!q)return;
+  const text=`“${q.quote}” — ${q.by}\n\nIntention: ${q.intention}`;
+  try{if(navigator.share){await navigator.share({text});return}}catch(e){if(e.name==="AbortError")return}
+  try{await navigator.clipboard.writeText(text);$("qShare").textContent="Copied";setTimeout(()=>$("qShare").textContent="Share",2000)}catch(e){}};
+
+// Settings: defaults for every practice.
+const SETTLES=[5,10,20,30],GOALS=[0,1,2,3,4,5,6,7];
+function applyTheme(){const r=document.documentElement;if(prefs.theme==="auto")delete r.dataset.theme;else r.dataset.theme=prefs.theme}
+function renderSettings(){
+  $("setTime").innerHTML=[`<button data-time="0" aria-pressed="${!prefs.defTime}">Each practice's own</button>`,
+    ...TIMES.map(m=>`<button data-time="${m}" aria-pressed="${prefs.defTime===m}">${timeLabel(m)}</button>`)].join("");
+  const tc=$("setTime"),on=tc.querySelector('[aria-pressed="true"]');if(on)tc.scrollLeft=Math.max(0,on.offsetLeft-tc.clientWidth/2+on.offsetWidth/2);
+  $("sGuided").setAttribute("aria-pressed",prefs.mode!=="silent");$("sSilent").setAttribute("aria-pressed",prefs.mode==="silent");
+  $("setSettle").innerHTML=SETTLES.map(n=>`<button data-settle="${n}" aria-pressed="${SETTLE===n}">${n} sec</button>`).join("");
+  $("setGoal").innerHTML=GOALS.map(n=>`<button data-goal="${n}" aria-pressed="${prefs.goal===n}">${n||"Off"}</button>`).join("");
+  $("setGoalNote").textContent=prefs.goal?`${prefs.goal} day${prefs.goal>1?"s":""} a week. Your progress shows on Home and in Calendar.`:"No weekly goal. Home shows your streak.";
+  document.querySelectorAll("#setTheme button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.theme===prefs.theme));
+}
+$("setTime").onclick=e=>{const b=e.target.closest("[data-time]");if(!b)return;prefs.defTime=+b.dataset.time;prefs.time={};savePrefs();renderSettings()}; // a new default applies everywhere
+$("sGuided").onclick=()=>{prefs.mode="guided";savePrefs();renderSettings()};
+$("sSilent").onclick=()=>{prefs.mode="silent";savePrefs();renderSettings()};
+$("setSettle").onclick=e=>{const b=e.target.closest("[data-settle]");if(!b)return;prefs.settle=SETTLE=+b.dataset.settle;savePrefs();renderSettings()};
+$("setGoal").onclick=e=>{const b=e.target.closest("[data-goal]");if(!b)return;prefs.goal=+b.dataset.goal;savePrefs();renderSettings();showCount()};
+$("setTheme").onclick=e=>{const b=e.target.closest("[data-theme]");if(!b)return;prefs.theme=b.dataset.theme;savePrefs();applyTheme();renderSettings()};
+$("clearHist").onclick=()=>{if(!confirm("Clear your practice history? Your calendar, streak and cycle days start again from zero."))return;
+  try{for(const k of Object.keys(localStorage))if(/^sp-(hist|prog-|\d)/.test(k))localStorage.removeItem(k);localStorage.setItem("sp-hist","{}")}catch(e){}
+  showCount();alert("History cleared.")};
 const setMode=m=>{prefs.mode=m;savePrefs();render()};
 $("mGuided").onclick=()=>setMode("guided");
 $("mSilent").onclick=()=>setMode("silent");
@@ -372,14 +431,15 @@ document.addEventListener("visibilitychange",()=>{if(document.hidden&&running)pa
 const getJSON=u=>fetch(u).then(r=>r.json());
 Promise.all([
   getJSON("content/days.json"),
+  getJSON("content/daily.json").catch(()=>[]),
   getJSON("content/practices.json").then(ids=>Promise.all(ids.map(id=>getJSON(`content/practices/${id}.json`).then(p=>({...p,id}))))).catch(()=>[]),
   fetch("audio/clips.json").then(r=>r.ok?r.json():null).catch(()=>null)
-]).then(([data,practices,clips])=>{
-  DATA=data;DAYS=data.days;SETTLE=data.settleSeconds||10;CLIPS=clips&&clips.clips?clips:null;
+]).then(([data,daily,practices,clips])=>{
+  DATA=data;DAYS=data.days;SETTLE=prefs.settle||data.settleSeconds||10;QUOTES=daily;CLIPS=clips&&clips.clips?clips:null;
   practices.forEach(p=>PR[p.id]=p);ORDER=practices.map(p=>p.id);
   if(prefs.practice!=="chakras"&&!PR[prefs.practice])prefs.practice="chakras";
   todayIdx=DAYS.findIndex(d=>d.dow===new Date().getDay());cur=todayIdx;
-  greet();showCount();syncToggles();render();
+  greet();showCount();syncToggles();go((location.hash||"").slice(1));
 });
 
 if(!standalone&&/iPhone|iPad|iPod/.test(navigator.userAgent))$("install").classList.add("show");

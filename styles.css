@@ -20,7 +20,9 @@ html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.55;
   -webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased;
   padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px));
-  padding-top:calc(18px + env(safe-area-inset-top,0px));padding-bottom:calc(112px + env(safe-area-inset-bottom,0px))}
+  padding-top:calc(18px + env(safe-area-inset-top,0px));padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+body[data-page="home"]{padding-bottom:calc(170px + env(safe-area-inset-bottom,0px))}
+body:not([data-page="home"]) .bar{display:none}
 .wrap{max-width:540px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
 h1,h2,h3{font-family:var(--display);font-weight:400;margin:0;text-wrap:balance;letter-spacing:-.01em}
 button{font:inherit;color:inherit}
@@ -134,10 +136,42 @@ button:focus-visible,summary:focus-visible{outline:2px solid var(--chakra);outli
 .teach a,.credit a{color:inherit}
 .credit{font-size:12px;color:var(--muted);margin:0;text-align:center}
 
-/* Sticky Begin */
-.bar{position:fixed;left:0;right:0;bottom:0;z-index:10;
-  padding:14px max(20px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px));
-  background:linear-gradient(to top,var(--bg) 55%,color-mix(in srgb,var(--bg) 0%,transparent))}
+/* Sticky Begin, sitting just above the tab bar */
+.bar{position:fixed;left:0;right:0;bottom:calc(62px + env(safe-area-inset-bottom,0px));z-index:10;
+  padding:14px max(20px,env(safe-area-inset-right,0px)) 10px max(20px,env(safe-area-inset-left,0px));
+  background:linear-gradient(to top,var(--bg) 60%,color-mix(in srgb,var(--bg) 0%,transparent))}
+
+/* Tab bar */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:space-around;
+  padding:6px max(10px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px));
+  background:color-mix(in srgb,var(--surface) 88%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--line)}
+.tabs button{appearance:none;border:0;background:none;cursor:pointer;flex:1;max-width:120px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;
+  font-size:11px;font-weight:600;color:var(--muted);transition:color .2s}
+.tabs svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.tabs button[aria-current="page"]{color:var(--chakra)}
+
+/* Today: quote and intention */
+.quote{position:relative;overflow:hidden;border-radius:28px;padding:26px 24px 24px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:14px;
+  background:
+    radial-gradient(120% 80% at 100% 0%,color-mix(in srgb,var(--q,var(--chakra)) 32%,transparent),transparent 60%),
+    radial-gradient(90% 70% at 0% 100%,color-mix(in srgb,var(--q,var(--chakra)) 14%,transparent),transparent 70%),
+    var(--surface)}
+.quote .pill{align-self:flex-start;background:color-mix(in srgb,var(--q,var(--chakra)) 16%,var(--surface));color:color-mix(in srgb,var(--q,var(--chakra)) 70%,var(--fg))}
+.quote blockquote{margin:0;font-family:var(--display);font-size:27px;line-height:1.3;letter-spacing:-.01em;text-wrap:pretty}
+.quote blockquote::before{content:"“";display:block;font-size:64px;line-height:.6;margin:10px 0 4px;color:var(--q,var(--chakra));opacity:.7}
+.quote .by{margin:0;font-size:14px;color:var(--muted)}
+.quote .by::before{content:"— "}
+.intention{padding:18px 20px;display:flex;flex-direction:column;gap:8px}
+.intention p{margin:0;font-size:17px;line-height:1.5}
+.pair{display:flex;gap:10px}
+.pair .begin{flex:1.4;width:auto;background:var(--q,var(--chakra));box-shadow:none}
+.pair .share{flex:1}
+
+/* Settings groups */
+.group{padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+.group h3{font-size:20px}
+.group .chips.scroll{margin:0 -20px;padding:2px 20px 4px}
+.progress.goal{margin-top:-6px}
 .begin{display:block;width:100%;max-width:540px;margin:0 auto;border:0;border-radius:999px;padding:17px 24px;cursor:pointer;
   font-size:17px;font-weight:600;letter-spacing:.01em;color:#fff;background:var(--chakra);
   box-shadow:0 10px 24px -10px color-mix(in srgb,var(--chakra) 70%,transparent);transition:transform .15s ease,background .5s ease}

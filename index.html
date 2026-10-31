@@ -19,21 +19,14 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap">
 <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body data-page="home">
 
-<div class="wrap">
+<!-- Home: today's practice -->
+<main class="wrap page" id="pHome">
   <header class="top">
     <div>
       <p class="hello" id="hello">Welcome</p>
       <h1>Dhyana</h1>
-    </div>
-    <div class="topbtns">
-    <button class="iconbtn" id="openCal" aria-label="Your practice calendar">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="3"/><path d="M4 10h16M9 3.5v4M15 3.5v4"/></svg>
-    </button>
-    <button class="iconbtn" id="openSettings" aria-label="Sound and tips">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
-    </button>
     </div>
   </header>
 
@@ -41,7 +34,6 @@
 
   <nav class="practices" id="practices" aria-label="Choose a practice"></nav>
 
-  <!-- Today: the one thing to look at. -->
   <section class="hero" aria-labelledby="poolTitle">
     <div class="heroTop"><span class="pill" id="poolEyebrow"></span><span class="count" id="count"></span></div>
     <h2 id="poolTitle"></h2>
@@ -85,17 +77,34 @@
     <p class="release" id="release"></p>
     <div class="teach" id="teach"></div>
   </details>
+</main>
 
-  <p class="credit">Voice by <a href="https://elevenlabs.io" target="_blank" rel="noopener">ElevenLabs</a></p>
-</div>
+<!-- Today: a quote and an intention for the day -->
+<main class="wrap page" id="pToday" hidden>
+  <header class="top"><div><p class="hello" id="qDate">Today</p><h1>Today</h1></div>
+    <div class="topbtns">
+      <button class="iconbtn" id="qPrev" aria-label="Previous day"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6l-6 6 6 6"/></svg></button>
+      <button class="iconbtn" id="qNext" aria-label="Next day"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 6l6 6-6 6"/></svg></button>
+    </div>
+  </header>
+  <article class="quote" id="qCard">
+    <span class="pill" id="qTheme"></span>
+    <blockquote id="qText"></blockquote>
+    <p class="by" id="qBy"></p>
+  </article>
+  <section class="card intention">
+    <span class="label">Intention for the day</span>
+    <p id="qIntent"></p>
+  </section>
+  <div class="pair"><button class="begin" id="qSit">Sit with this</button><button class="share" id="qShare">Share</button></div>
+</main>
 
-<div class="bar"><button class="begin" id="begin">Begin</button></div>
-
-<dialog id="calendar" aria-labelledby="calHead">
-  <div class="sheet">
-    <div class="sheetHead"><h3 id="calHead">Your practice</h3><button class="iconbtn" id="closeCal" aria-label="Close">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-    <div class="stats" id="calStats"></div>
+<!-- Calendar: what you've practised -->
+<main class="wrap page" id="pCal" hidden>
+  <header class="top"><div><p class="hello">Your practice</p><h1>Calendar</h1></div></header>
+  <div class="stats" id="calStats"></div>
+  <div class="progress goal" id="goalWrap"><div class="track"><i id="goalBar"></i></div><small id="goalNote"></small></div>
+  <section class="card calCard">
     <div class="calNav">
       <button class="iconbtn" id="calPrev" aria-label="Previous month"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6l-6 6 6 6"/></svg></button>
       <span id="calTitle"></span>
@@ -103,32 +112,72 @@
     </div>
     <div class="cal"><div class="dow"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div><div class="grid" id="calGrid"></div></div>
     <p class="note" id="calDay"></p>
-    <button class="share" id="shareWeek">Share my week</button>
-  </div>
-</dialog>
+  </section>
+  <button class="share" id="shareWeek">Share my week</button>
+</main>
 
-<dialog id="settings" aria-labelledby="settingsTitle">
-  <div class="sheet">
-    <div class="sheetHead"><h3 id="settingsTitle">Sound</h3><button class="iconbtn" id="closeSettings" aria-label="Close">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+<!-- Settings: defaults for every practice -->
+<main class="wrap page" id="pSettings" hidden>
+  <header class="top"><div><p class="hello">Defaults for every practice</p><h1>Settings</h1></div></header>
+
+  <section class="card group">
+    <h3>Sessions</h3>
+    <div class="opt"><span class="label">Length</span><div class="chips scroll" id="setTime"></div>
+      <p class="note">Used by every practice that can fit it. You can still change one practice's time on Home.</p></div>
+    <div class="opt"><span class="label">Guidance</span><div class="seg"><button id="sGuided">Guided</button><button id="sSilent">No guidance</button></div></div>
+    <div class="opt"><span class="label">Settle time after Begin</span><div class="seg" id="setSettle"></div></div>
+  </section>
+
+  <section class="card group">
+    <h3>Weekly goal</h3>
+    <div class="seg" id="setGoal"></div>
+    <p class="note" id="setGoalNote"></p>
+  </section>
+
+  <section class="card group">
+    <h3>Sound</h3>
     <div class="chips">
       <button class="chip" id="tVoice" aria-pressed="true">Voice guide</button>
       <button class="chip" id="tTones" aria-pressed="true">Breath tones</button>
       <button class="chip" id="test">Test sound</button>
     </div>
     <p class="note" id="voiceNote">Set your volume with Test sound.</p>
+  </section>
+
+  <section class="card group">
+    <h3>Appearance</h3>
+    <div class="seg" id="setTheme"><button data-theme="auto">Automatic</button><button data-theme="light">Light</button><button data-theme="dark">Dark</button></div>
+  </section>
+
+  <section class="card group">
     <h3>Tips</h3>
     <ul class="tips">
       <li>Same spot, same time. Open the app, read for a minute, press Begin, and set the phone face down.</li>
-      <li>You get 10 seconds after Begin to settle. A bell starts the session; three bells end it.</li>
+      <li>After Begin you get a few seconds to settle. A bell starts the session; three bells end it.</li>
       <li>Tap the black screen once to pause or end.</li>
       <li>Don't lock the phone during the sit. The screen stays on but black so the timing keeps working. If it locks or you switch apps, the session pauses where you left it.</li>
       <li data-only="chakras">Sit on the cushion by default. Kneel if your hips are tight. Lie down only when tired, and on Fire day swap the pumping breath for slow belly breaths.</li>
-      <li data-only="chakras">Sitting again later? Repeat the same day.</li>
       <li data-only="chakras">If the intention question brings up something heavy, let it be there and return to the breath. You don't need to solve it on the cushion.</li>
     </ul>
-  </div>
-</dialog>
+  </section>
+
+  <section class="card group">
+    <h3>Your data</h3>
+    <p class="note">Your history, cycles and settings stay on this phone.</p>
+    <button class="link" id="clearHist">Clear practice history</button>
+  </section>
+
+  <p class="credit">Voice by <a href="https://elevenlabs.io" target="_blank" rel="noopener">ElevenLabs</a></p>
+</main>
+
+<div class="bar"><button class="begin" id="begin">Begin</button></div>
+
+<nav class="tabs" aria-label="Sections">
+  <button data-go="home" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-6.5 8 6.5V19a1.5 1.5 0 0 1-1.5 1.5H15v-5.5h-6v5.5H5.5A1.5 1.5 0 0 1 4 19z"/></svg><span>Home</span></button>
+  <button data-go="today"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.6"/><path d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M5.6 18.4l1.6-1.6M16.8 7.2l1.6-1.6"/></svg><span>Today</span></button>
+  <button data-go="calendar"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="3"/><path d="M4 10h16M9 3.5v4M15 3.5v4"/></svg><span>Calendar</span></button>
+  <button data-go="settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span>Settings</span></button>
+</nav>
 
 <div id="sit" hidden>
   <div id="sitLive">
