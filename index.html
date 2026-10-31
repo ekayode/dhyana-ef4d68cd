@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Dhyana</title>
-<meta name="description" content="Daily meditation: the seven chakras, Yoga Nidra, Isha Kriya, metta, body scan, So Hum and candle gazing.">
+<meta name="description" content="Daily meditation: the seven chakras, Yoga Nidra, Kriya, metta, body scan, So Hum and candle gazing.">
 <meta name="theme-color" content="#f5f1ea" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0f1115" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -27,9 +27,14 @@
       <p class="hello" id="hello">Welcome</p>
       <h1>Dhyana</h1>
     </div>
+    <div class="topbtns">
+    <button class="iconbtn" id="openCal" aria-label="Your practice calendar">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="3"/><path d="M4 10h16M9 3.5v4M15 3.5v4"/></svg>
+    </button>
     <button class="iconbtn" id="openSettings" aria-label="Sound and tips">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
     </button>
+    </div>
   </header>
 
   <div class="install" id="install"><b>Add it to your home screen.</b> In Safari, tap Share, then Add to Home Screen. It opens full-screen, works offline, and plays sound with the silent switch on.</div>
@@ -85,6 +90,22 @@
 </div>
 
 <div class="bar"><button class="begin" id="begin">Begin</button></div>
+
+<dialog id="calendar" aria-labelledby="calHead">
+  <div class="sheet">
+    <div class="sheetHead"><h3 id="calHead">Your practice</h3><button class="iconbtn" id="closeCal" aria-label="Close">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="stats" id="calStats"></div>
+    <div class="calNav">
+      <button class="iconbtn" id="calPrev" aria-label="Previous month"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6l-6 6 6 6"/></svg></button>
+      <span id="calTitle"></span>
+      <button class="iconbtn" id="calNext" aria-label="Next month"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 6l6 6-6 6"/></svg></button>
+    </div>
+    <div class="cal"><div class="dow"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div><div class="grid" id="calGrid"></div></div>
+    <p class="note" id="calDay"></p>
+    <button class="share" id="shareWeek">Share my week</button>
+  </div>
+</dialog>
 
 <dialog id="settings" aria-labelledby="settingsTitle">
   <div class="sheet">

@@ -40,6 +40,7 @@ const LEDE={
 // A step: dur in seconds. lines: [time, ...keys], time in seconds, negative (from the end) or "50%".
 // every: {from, step, keys, endGap} adds check-ins at a steady interval, cycling through keys.
 // flex: the step stretches or shrinks when a different time is chosen (true weighs it by its duration; a number is its weight).
+// shrink: the step may get shorter for a short session, but never takes extra time.
 // Only flexible steps change length; their check-ins and cues spread out in proportion, and the spoken guidance stays as it is.
 const TIMES=[5,10,15,20,30,45,60,90,120]; // minutes offered besides each practice's default
 function speechSecs(keys){return keys.reduce((a,k)=>{const m=CLIPS&&(k==="in"||k==="out"?null:CLIPS.clips[clipId(k)]);return a+(m&&m.dur||8)+GAP},0)}
@@ -50,14 +51,16 @@ function minDur(s){if(!s.dur)return 0;
 // Durations for each step so the session lasts target seconds, or null if it can't be that short.
 function fitDurs(list,target){
   const base=list.map(s=>s.dur);if(!target)return base;
-  const flex=base.map((d,i)=>list[i].flex?i:-1).filter(i=>i>=0);if(!flex.length)return null;
-  const mins=list.map(s=>s.flex?minDur(s):s.dur),sum=a=>a.reduce((x,i)=>x+i,0);
-  const avail=target-sum(list.filter(s=>!s.flex).map(s=>s.dur)),fbase=sum(flex.map(i=>base[i])),fmin=sum(flex.map(i=>mins[i]));
-  if(avail<fmin||(avail>fbase&&!flex.some(i=>list[i].flex===true?base[i]:list[i].flex)))return null;
+  const can=s=>s.flex||s.shrink,w=i=>list[i].flex===true?base[i]:(+list[i].flex||0),sum=a=>a.reduce((x,i)=>x+i,0);
+  const flex=base.map((d,i)=>can(list[i])?i:-1).filter(i=>i>=0);if(!flex.length)return null;
+  const mins=list.map(s=>can(s)?minDur(s):s.dur);
+  const avail=target-sum(list.filter(s=>!can(s)).map(s=>s.dur)),fbase=sum(flex.map(i=>base[i])),fmin=sum(flex.map(i=>mins[i]));
+  const W=sum(flex.map(w));
+  if(avail<fmin||(avail>fbase&&!W))return null;
   const out=base.slice();
-  if(avail>=fbase){const w=i=>list[i].flex===true?base[i]:list[i].flex,W=sum(flex.map(w));flex.forEach(i=>out[i]=Math.round(base[i]+(avail-fbase)*w(i)/W))}
+  if(avail>=fbase)flex.forEach(i=>out[i]=Math.round(base[i]+(avail-fbase)*w(i)/W));
   else{const room=fbase-fmin;flex.forEach(i=>out[i]=Math.round(base[i]-(fbase-avail)*(base[i]-mins[i])/room))}
-  out[flex[flex.length-1]]+=target-sum(out); // rounding
+  const big=flex.reduce((a,i)=>out[i]>out[a]?i:a,flex[0]);out[big]+=target-sum(out); // rounding, on the longest step
   return out;
 }
 function shape(list,target,fill=t=>t){
@@ -65,9 +68,9 @@ function shape(list,target,fill=t=>t){
   return list.map((s,i)=>{
     const dur=durs[i],r=s.dur?dur/s.dur:1,g=t=>t<0?dur+t:t;
     // Cues in a flexible step move with it, except the opening words and anything tied to the guided breathing.
-    const at=t=>typeof t==="string"?Math.round(dur*parseFloat(t)/100):t<0?dur+t:s.flex&&t>5&&!(s.guideUntil!=null&&t<=s.guideUntil)?Math.round(t*r):t;
+    const at=t=>typeof t==="string"?Math.round(dur*parseFloat(t)/100):t<0?dur+t:(s.flex||s.shrink)&&t>5&&!(s.guideUntil!=null&&t<=s.guideUntil)?Math.round(t*r):t;
     const lines=(s.lines||[]).map(([t,...k])=>[at(t),...k]);
-    if(s.every){const e=s.every,f=s.flex?r:1;for(let t=e.from*f,k=0;t<=dur-(e.endGap||60);t+=Math.max(60,e.step*f),k++)lines.push([Math.round(t),e.keys[k%e.keys.length]])}
+    if(s.every){const e=s.every,f=s.flex||s.shrink?r:1;for(let t=e.from*f,k=0;t<=dur-(e.endGap||60);t+=Math.max(60,e.step*f),k++)lines.push([Math.round(t),e.keys[k%e.keys.length]])}
     lines.sort((a,b)=>a[0]-b[0]);
     return {...s,dur,lines,name:fill(s.name),read:fill(s.read),
       guideUntil:s.guideUntil!=null?g(s.guideUntil):undefined,paceUntil:s.paceUntil!=null?g(s.paceUntil):undefined};
@@ -95,9 +98,48 @@ function logSit(p){const s=progLoad(p),k=dateKey();s.cycle=s.cycle||p.defaultCyc
 const minLabel=s=>{const m=s/60;if(m>=59.5){const h=Math.floor((m+.5)/60),r=Math.round(m-h*60);return r>0?`${h} hr ${r} min`:`${h} hr`}
   return (Number.isInteger(m)?m:Math.floor(m)+(m%1>=.5?"½":""))+" min"};
 function dateKey(){const n=new Date();return n.getFullYear()+"-"+(n.getMonth()+1)+"-"+n.getDate()}
-function readCount(){try{return +(localStorage.getItem("sp-"+dateKey())||0)}catch(e){return 0}}
-function addCount(){try{localStorage.setItem("sp-"+dateKey(),readCount()+1)}catch(e){} showCount()}
-function showCount(){const n=readCount();$("count").textContent=n?`${n} session${n>1?"s":""} today`:""}
+/* ---------- history: every finished sit, for the calendar and streak ---------- */
+// sp-hist: {"2026-10-30": [["kriya", 15], ["chakras", 12.5]]} — practice id and minutes (null for sits logged before minutes were kept).
+const keyOf=d=>d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();
+function histLoad(){try{const h=localStorage.getItem("sp-hist");if(h)return JSON.parse(h)}catch(e){return {}}
+  // First run: rebuild from the older per-day counts and per-practice logs.
+  const h={};try{
+    for(const k of Object.keys(localStorage)){
+      let m=k.match(/^sp-prog-(.+)$/);if(m){const log=(JSON.parse(localStorage.getItem(k))||{}).log||{};
+        for(const [d,n] of Object.entries(log))for(let i=0;i<n;i++)(h[d]=h[d]||[]).push([m[1],null])}}
+    for(const k of Object.keys(localStorage)){const m=k.match(/^sp-(\d{4}-\d{1,2}-\d{1,2})$/);if(!m)continue;
+      const extra=(+localStorage.getItem(k)||0)-(h[m[1]]||[]).length;for(let i=0;i<extra;i++)(h[m[1]]=h[m[1]]||[]).push(["chakras",null])}
+    localStorage.setItem("sp-hist",JSON.stringify(h))}catch(e){}
+  return h}
+function histAdd(id,mins){const h=histLoad(),k=dateKey();(h[k]=h[k]||[]).push([id,mins]);try{localStorage.setItem("sp-hist",JSON.stringify(h))}catch(e){}}
+function streak(h=histLoad()){const d=new Date();if(!h[keyOf(d)])d.setDate(d.getDate()-1);let n=0;while(h[keyOf(d)]){n++;d.setDate(d.getDate()-1)}return n}
+const pColor=id=>id==="chakras"?"#c2413a":(PR[id]&&PR[id].c)||"#888";
+const pName=id=>id==="chakras"?"Seven chakras":(PR[id]&&PR[id].name)||id;
+function readCount(){return (histLoad()[dateKey()]||[]).length}
+function showCount(){const n=readCount(),st=streak();
+  $("count").textContent=st>1?`${st}-day streak`:n?`${n} session${n>1?"s":""} today`:""}
+
+let calMonth=new Date();calMonth.setDate(1);let calSel=null;
+function renderCal(){
+  const h=histLoad(),y=calMonth.getFullYear(),m=calMonth.getMonth(),today=dateKey();
+  $("calTitle").textContent=calMonth.toLocaleDateString(undefined,{month:"long",year:"numeric"});
+  const first=(new Date(y,m,1).getDay()+6)%7,days=new Date(y,m+1,0).getDate();let cells="",sits=0,mins=0,sat=0;
+  for(let i=0;i<first;i++)cells+=`<span></span>`;
+  for(let d=1;d<=days;d++){const k=`${y}-${m+1}-${d}`,list=h[k]||[];
+    if(list.length){sat++;sits+=list.length;mins+=list.reduce((a,e)=>a+(e[1]||0),0)}
+    const dots=list.slice(0,3).map(e=>`<i style="background:${pColor(e[0])}"></i>`).join("");
+    cells+=`<button class="cday${list.length?" sat":""}${k===today?" now":""}${k===calSel?" sel":""}" data-k="${k}" style="--c:${list.length?pColor(list[0][0]):"transparent"}" aria-label="${d}${list.length?`, ${list.length} sit${list.length>1?"s":""}`:""}">${d}<b>${dots}</b></button>`}
+  $("calGrid").innerHTML=cells;
+  $("calStats").innerHTML=`<div><b>${streak(h)}</b><small>day streak</small></div><div><b>${sat}</b><small>days this month</small></div><div><b>${Math.round(mins)}</b><small>minutes</small></div>`;
+  const sel=calSel&&h[calSel];
+  $("calDay").textContent=sel?`${new Date(calSel.replace(/-/g,"/")).toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"})}: ${sel.map(e=>pName(e[0])+(e[1]?` · ${minLabel(e[1]*60)}`:"")).join(", ")}`:
+    sits?"Tap a day to see what you practised.":"Days you sit will light up here.";
+}
+// "Share my week": a short summary to send to a friend, through the phone's own share sheet.
+function weekSummary(){const h=histLoad(),d=new Date(),lines=[];let days=0,mins=0;
+  for(let i=6;i>=0;i--){const x=new Date(d);x.setDate(d.getDate()-i);const l=h[keyOf(x)]||[];if(l.length)days++;mins+=l.reduce((a,e)=>a+(e[1]||0),0);
+    lines.push(`${x.toLocaleDateString(undefined,{weekday:"short"})} ${l.length?"●":"○"}`)}
+  return `My meditation week: ${days} of 7 days, ${Math.round(mins)} minutes, ${streak(h)}-day streak.\n${lines.join("  ")}\nSit with me: ${location.origin+location.pathname}`}
 function greet(){const h=new Date().getHours();$("hello").textContent=h<5?"Good night":h<12?"Good morning":h<18?"Good afternoon":"Good evening"}
 function savePrefs(){try{localStorage.setItem("sp-prefs",JSON.stringify(prefs))}catch(e){}}
 function syncToggles(){const can=!!CLIPS||canSpeak;$("tVoice").setAttribute("aria-pressed",prefs.voice&&can);$("tTones").setAttribute("aria-pressed",prefs.tones);
@@ -284,7 +326,8 @@ function tick(){
     }
   }
 }
-function finish(){stop();stopVoice();inSession=false;bell(3);if(guided())setTimeout(()=>playClip(clipId("complete")),4200);addCount();
+function finish(){stop();stopVoice();inSession=false;bell(3);if(guided())setTimeout(()=>playClip(clipId("complete")),4200);
+  histAdd(prefs.practice,Math.round(total()/30)/2);showCount();
   const p=P();if(p){logSit(p);render()}done=true;drawClock();
   setTimeout(()=>{$("sit").hidden=true},7500)}
 function stop(){running=false;clearInterval(timer);timer=null;try{wake&&wake.release()}catch(e){}wake=null}
@@ -307,6 +350,16 @@ $("cycleChips").onclick=e=>{const p=P(),b=e.target.closest("[data-cycle]");if(!p
 $("restart").onclick=()=>{const p=P();if(!p||!confirm(`Start ${p.name} over from day 1? Your sits so far will be cleared.`))return;
   const s=progLoad(p);s.log={};progSave(p,s);render()};
 $("timeChips").onclick=e=>{const b=e.target.closest("[data-time]");if(!b)return;prefs.time[prefs.practice]=+b.dataset.time;savePrefs();render()};
+const openSheet=d=>d.showModal?d.showModal():d.setAttribute("open","");
+$("openCal").onclick=()=>{calMonth=new Date();calMonth.setDate(1);calSel=null;renderCal();openSheet($("calendar"))};
+$("closeCal").onclick=()=>$("calendar").close();
+$("calendar").onclick=e=>{if(e.target===$("calendar"))$("calendar").close()};
+$("calPrev").onclick=()=>{calMonth.setMonth(calMonth.getMonth()-1);renderCal()};
+$("calNext").onclick=()=>{calMonth.setMonth(calMonth.getMonth()+1);renderCal()};
+$("calGrid").onclick=e=>{const b=e.target.closest(".cday");if(b){calSel=b.dataset.k;renderCal()}};
+$("shareWeek").onclick=async()=>{const text=weekSummary();
+  try{if(navigator.share){await navigator.share({text});return}}catch(e){if(e.name==="AbortError")return}
+  try{await navigator.clipboard.writeText(text);$("shareWeek").textContent="Copied. Paste it to a friend";setTimeout(()=>$("shareWeek").textContent="Share my week",2500)}catch(e){}};
 $("openSettings").onclick=()=>{const d=$("settings");d.showModal?d.showModal():d.setAttribute("open","")};
 $("closeSettings").onclick=()=>$("settings").close();
 $("settings").onclick=e=>{if(e.target===$("settings"))$("settings").close()}; // tap outside the sheet

@@ -1,7 +1,7 @@
 {
   "name": "Dhyana",
   "short_name": "Dhyana",
-  "description": "Daily meditation: the seven chakras, Yoga Nidra, Isha Kriya, metta, body scan, So Hum and candle gazing.",
+  "description": "Daily meditation: the seven chakras, Yoga Nidra, Kriya, metta, body scan, So Hum and candle gazing.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

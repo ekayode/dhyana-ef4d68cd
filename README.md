@@ -1,6 +1,6 @@
 # Dhyana
 
-A daily meditation app, installable from the home screen. (It began as "Seven Pools", which is why the repository and URL keep that name.) Practices: the seven chakras (one pool per weekday, from Aang's seven chakras with Guru Pathik), Yoga Nidra, Isha Kriya, Metta, a Vipassana-style body scan, So Hum and Trataka. Each practice has its own cycle (for example 90 days of Isha Kriya) and tracks the days you've sat.
+A daily meditation app, installable from the home screen. (It began as "Seven Pools", which is why the repository and URL keep that name.) Practices: the seven chakras (one pool per weekday, from Aang's seven chakras with Guru Pathik), Yoga Nidra, Kriya (following Isha Kriya), Metta, a Vipassana-style body scan, So Hum and Trataka. Each practice has its own cycle (for example 90 days of Kriya) and tracks the days you've sat.
 
 ## Files
 

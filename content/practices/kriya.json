@@ -1,7 +1,7 @@
 {
- "name": "Isha Kriya",
+ "name": "Kriya",
  "sub": "Breath, thought and stillness",
- "title": "Isha <em>Kriya</em>",
+ "title": "<em>Kriya</em>",
  "short": "Kriya",
  "c": "#5b54c9",
  "doneText": "Complete. I am not the body, I am not even the mind.",
@@ -26,7 +26,7 @@
   "Don't take a break in the middle. Do all three stages in one go.",
   "At least 12 minutes each time: twice a day for 48 days (one mandala), or once a day for 90 days.",
   "Any time during the day, you can remind yourself: I am not the body, I am not even the mind.",
-  "Isha Foundation teaches Isha Kriya free at <a href=\"https://isha.sadhguru.org/en/yoga-meditation/yoga-program-for-beginners/isha-kriya\" target=\"_blank\" rel=\"noopener\">isha.sadhguru.org</a>. This app is a personal practice timer and isn't affiliated with them."
+  "This practice follows Isha Kriya, which Isha Foundation teaches free at <a href=\"https://isha.sadhguru.org/en/yoga-meditation/yoga-program-for-beginners/isha-kriya\" target=\"_blank\" rel=\"noopener\">isha.sadhguru.org</a>. This app is a personal practice timer and isn't affiliated with them."
  ],
  "guided": [
   {"key": "posture", "name": "Posture", "dur": 55, "lines": [[2, "intro", "teach"]],
@@ -52,7 +52,7 @@
    "read": "A bell. Face slightly up, a mild focus between the eyebrows. Simply sit. Three bells end it."}
  ],
  "say": {
-  "intro": "Today... Isha Kriya. Very simple... very powerful. Sit cross-legged... spine comfortably erect. A backrest is fine... a headrest, no. Hands on the thighs... palms up. Lift the face... just slightly. Eyes closed... and a mild focus... between the eyebrows.",
+  "intro": "Today... the kriya. Very simple... very powerful. Sit cross-legged... spine comfortably erect. A backrest is fine... a headrest, no. Hands on the thighs... palms up. Lift the face... just slightly. Eyes closed... and a mild focus... between the eyebrows.",
   "teach": "Here is the whole secret. Breathing in... silently say... I am not the body. Breathing out... I am not even the mind. Let each breath last... as long as its thought. Gently. No forcing.",
   "begin": "Let us begin... together.",
   "kin": "I am not the body...",
