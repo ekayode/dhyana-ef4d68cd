@@ -3,6 +3,7 @@
  "sub": "Yogic sleep, lying down",
  "title": "Yoga <em>Nidra</em>",
  "short": "Nidra",
+ "category": "Sleep",
  "c": "#3f7fb5",
  "doneText": "Complete. Rested, and awake.",
  "pace": {"pause": 1.0, "stretch": 1.5, "gap": 1.6, "slower": 1.25},

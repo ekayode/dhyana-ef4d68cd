@@ -1,8 +1,9 @@
 {
- "name": "Kriya",
+ "name": "Mindful meditation",
  "sub": "Breath, thought and stillness",
- "title": "<em>Kriya</em>",
- "short": "Kriya",
+ "title": "Mindful <em>meditation</em>",
+ "short": "Mindful",
+ "category": "Breath",
  "c": "#5b54c9",
  "doneText": "Complete. I am not the body, I am not even the mind.",
  "lede": {

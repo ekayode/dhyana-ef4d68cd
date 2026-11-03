@@ -5,10 +5,14 @@ const $=id=>document.getElementById(id);
 let DATA=null, DAYS=[], SETTLE=10, todayIdx=0, CLIPS=null, PR={}, ORDER=[], pday=null, QUOTES=[];
 let cur=0, segs=[], segI=-1, segElapsed=0, running=false, inSession=false, done=false, last=0, timer=null, wake=null, ctx=null, lastPhase=-1, tickAcc=0;
 // mode: guided | silent. time: minutes chosen on Home per practice (0 = the practice's own length). defTime: the Settings default for every practice.
-// goal: days per week. settle: seconds after Begin (null = the content default). theme: auto | light | dark.
-const prefs={voice:true,tones:true,mode:"guided",practice:"chakras",time:{},defTime:0,goal:5,settle:null,theme:"auto"};
+// goal: days per week. settle: seconds after Begin (null = the content default). theme: auto (light 6 am to 6 pm, dark otherwise) | light | dark.
+// name: what the greeting calls you. welcomed: the first-open name screen has been seen.
+const prefs={voice:true,tones:true,mode:"guided",practice:"chakras",time:{},defTime:0,goal:5,settle:null,theme:"auto",name:"",welcomed:false};
 try{const p=JSON.parse(localStorage.getItem("sp-prefs")||"{}");Object.assign(prefs,p);delete prefs.len;prefs.time=prefs.time||{}}catch(e){}
-document.documentElement.dataset.theme=prefs.theme==="auto"?"":prefs.theme;if(prefs.theme==="auto")delete document.documentElement.dataset.theme;
+const DAY_FROM=6,NIGHT_FROM=18; // Automatic: light from 6 am, dark from 6 pm
+function applyTheme(){const h=new Date().getHours(),t=prefs.theme==="auto"?(h>=DAY_FROM&&h<NIGHT_FROM?"light":"dark"):prefs.theme;
+  document.documentElement.dataset.theme=t;const m=document.getElementById("themeColor");if(m)m.content=t==="dark"?"#121214":"#f5f1ea"}
+applyTheme();setInterval(applyTheme,60000);
 const canSpeak="speechSynthesis" in window;
 const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
 const P=()=>PR[prefs.practice]||null; // the current practice file; null means the seven chakras
@@ -127,7 +131,13 @@ function showCount(){const h=histLoad(),st=streak(h),wk=weekDays(h),parts=[];
   if(st>1)parts.push(`${st}-day streak`);if(prefs.goal)parts.push(`${Math.min(wk,prefs.goal)} of ${prefs.goal} this week`);
   else if(readCount())parts.push(`${readCount()} today`);
   $("count").textContent=parts.join(" · ");
-  const k=karmaOf().total;$("karmaBtn").hidden=!k;$("karmaPts").textContent=fmtK(k)}
+  const k=karmaOf().total;$("karmaLvl").textContent=levelOf(k).name;$("karmaPts").textContent=fmtK(k);renderMe()}
+// The name and its initials, wherever they show: greeting, avatar, drawer.
+const initials=n=>n.trim().split(/\s+/).slice(0,2).map(w=>w[0]).join("").toUpperCase();
+function renderMe(){const n=(prefs.name||"").trim(),k=karmaOf().total;
+  $("helloName").textContent=n?", "+n.split(/\s+/)[0]:"";
+  for(const id of ["avatar","dAvatar"]){const el=$(id);el.textContent=n?initials(n):"";el.classList.toggle("blank",!n)}
+  $("dName").textContent=n||"Add your name";$("dKarma").textContent=`✦ ${levelOf(k).name} · ${fmtK(k)} karma`}
 
 /* ---------- karma and badges: worked out from history each time, so they always match the calendar ---------- */
 const KARMA={sit:10,perMin:1,minCap:60,sitsPerDay:3,streakStep:5,streakCap:50,goal:50,explore:25};
@@ -235,9 +245,12 @@ const fmtDur=s=>s<60?`${s} sec`:s>=3600?minLabel(s):s%60?`${Math.floor(s/60)} mi
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]);
 
 /* ---------- screens ---------- */
+let catSel="All";
 function renderPractices(){
-  const all=[{id:"chakras",name:"Seven chakras",sub:"A pool for each weekday",c:"#c2413a"},...ORDER.map(id=>PR[id])];
-  $("practices").innerHTML=all.map(p=>`<button class="prac" style="--c:${p.c}" data-id="${p.id}" aria-pressed="${prefs.practice===p.id}"><span>${esc(p.name)}</span><small>${esc(p.sub)}</small></button>`).join("");
+  const all=[{id:"chakras",name:"Seven chakras",sub:"A pool for each weekday",c:"#c2413a",category:"Energy"},...ORDER.map(id=>PR[id])];
+  const cats=["All",...new Set(all.map(p=>p.category).filter(Boolean))];
+  $("cats").innerHTML=cats.map(c=>`<button data-cat="${c}" aria-pressed="${c===catSel}">${c}</button>`).join("");
+  $("practices").innerHTML=all.filter(p=>catSel==="All"||p.category===catSel).map(p=>`<button class="prac" style="--c:${p.c}" data-id="${p.id}" aria-pressed="${prefs.practice===p.id}"><i aria-hidden="true"></i><span>${esc(p.name)}</span><small>${esc(p.category||"")}</small></button>`).join("");
 }
 function renderDays(){
   $("days").innerHTML=DAYS.map((d,i)=>`<button class="day${i===todayIdx?" today":""}" style="--c:${d.c}" aria-pressed="${i===cur}" data-i="${i}"><small>${d.short}</small><i class="dot"></i><span>${d.el}</span></button>`).join("");
@@ -246,7 +259,7 @@ const facts=rows=>$("facts").innerHTML=rows.map(([k,v])=>`<dt>${esc(k)}</dt><dd>
 function selectDay(i){cur=i;render()}
 function render(){
   const p=P();
-  $("days").hidden=!!p;$("cycle").hidden=!p;$("progWrap").hidden=!p;
+  $("days").hidden=!!p;$("cycle").hidden=!p;
   document.querySelectorAll("[data-only]").forEach(el=>el.hidden=el.dataset.only!==(p?"other":"chakras"));
   renderPractices();
   let rawFull,rawQuiet,lede,fill;
@@ -255,7 +268,6 @@ function render(){
     document.documentElement.style.setProperty("--chakra",p.c);
     $("poolEyebrow").textContent=pr.label;
     $("poolTitle").innerHTML=p.title;$("heroSub").textContent=day?`${p.tagline||p.sub} · today, ${day.label.toLowerCase()}`:p.sub;
-    $("progBar").style.width=Math.min(100,pr.full/pr.c.days*100)+"%";$("progNote").textContent=`${pr.full} of ${pr.c.days} days · ${pr.c.label.split(" · ")[1]||pr.c.label}`;
     facts(p.facts);$("release").textContent=(day&&day.release)||p.release;
     $("teach").innerHTML=`<b>Guidelines</b><ul>${p.guidelines.map(g=>`<li>${g}</li>`).join("")}</ul>`;
     $("cycleChips").innerHTML=Object.entries(p.cycles).map(([id,c])=>`<button data-cycle="${id}" aria-pressed="${pr.id===id}">${esc(c.label.replace(" · ",", "))}</button>`).join("");
@@ -275,14 +287,12 @@ function render(){
   const want=effTime()*60,fit=list=>shape(list,want&&fitDurs(list,want)?want:0,fill);
   const full=fit(rawFull),quiet=rawQuiet?fit(rawQuiet):null,act=guided()?rawFull:rawQuiet;
   const def=act.reduce((a,s)=>a+s.dur,0),sel=want&&fitDurs(act,want)?want/60:0;
-  $("timeChips").innerHTML=[`<button data-time="0" aria-pressed="${!sel}">Default · ${minLabel(def)}</button>`,
-    ...TIMES.filter(m=>Math.abs(m*60-def)>=90&&fitDurs(act,m*60)).map(m=>`<button data-time="${m}" aria-pressed="${sel===m}">${timeLabel(m)}</button>`)].join("");
-  const tc=$("timeChips"),on=tc.querySelector('[aria-pressed="true"]');if(on)tc.scrollLeft=Math.max(0,on.offsetLeft-tc.clientWidth/2+on.offsetWidth/2); // keep the chosen time in view
+  $("timeSel").innerHTML=[`<option value="0">${minLabel(def)}</option>`,
+    ...TIMES.filter(m=>Math.abs(m*60-def)>=90&&fitDurs(act,m*60)).map(m=>`<option value="${m}">${timeLabel(m)}</option>`)].join("");
+  $("timeSel").value=String(sel||0);
   segs=guided()?full:quiet;done=false;drawClock();
-  $("mGuided").setAttribute("aria-pressed",guided());$("mSilent").setAttribute("aria-pressed",!guided());
-  $("mGuided").textContent=`Guided · ${minLabel(full.reduce((a,s)=>a+s.dur,0))}`;
-  $("modeRow").hidden=!quiet;if(quiet)$("mSilent").textContent=`No guidance · ${minLabel(quiet.reduce((a,s)=>a+s.dur,0))}`;
-  $("lede").textContent=guided()?lede.guided:lede.silent;$("begin").textContent=`Begin · ${minLabel(total())}`;
+  $("modeRow").hidden=!quiet;$("modeSel").value=guided()?"guided":"silent";
+  $("lede").textContent=guided()?lede.guided:lede.silent;$("begin").textContent="Begin →";
   $("flowMeta").textContent=`${segs.length} step${segs.length>1?"s":""} · ${minLabel(total())}`;
   $("steps").innerHTML=segs.map((s,k)=>`<li><span class="n">${k+1}</span><span class="t">${esc(s.name)}</span><span class="m">${fmtDur(s.dur)}</span>${s.q?`<span class="d">${s.pre}</span><span class="q">“${s.read}”</span><span class="hear">Hold it lightly as your intention for the sit.</span>`:`<span class="d">${s.read}</span>`}</li>`).join("");
 }
@@ -298,11 +308,9 @@ function drawClock(){
   if(!inSession)now=done?(P()?P().doneText:"Complete. Carry the seal with you."):`Ready · ${segs.length} step${segs.length>1?"s":""}`;
   else if(segI<0)now=`Settling · starts in ${fmt(SETTLE-segElapsed)}`;
   else now=`${segs[segI].name} · ${fmt(segs[segI].dur-segElapsed)} left`;
-  const sub=inSession&&segI>=0?`Step ${segI+1} of ${segs.length} · ${now}`:now;
-  if($("clockTime").textContent!==t){$("clockTime").textContent=t;$("sitClock").textContent=t}
-  if($("clockSub").textContent!==sub)$("clockSub").textContent=sub;
+  if($("sitClock").textContent!==t)$("sitClock").textContent=t;
   if($("sitSub").textContent!==now)$("sitSub").textContent=now;
-  const off=RING*(1-l/total());$("ringProg").style.strokeDashoffset=off;$("sitRing").style.strokeDashoffset=off;
+  $("sitRing").style.strokeDashoffset=RING*(1-l/total());
 }
 
 /* ---------- audio: bells and tones ---------- */
@@ -461,12 +469,25 @@ $("test").onclick=()=>{ac();loadClips(["common-test"]);bell(1);setTimeout(()=>to
   setTimeout(()=>{stopVoice();speak(["common-test"])},900)};
 $("days").onclick=e=>{const b=e.target.closest(".day");if(b)selectDay(+b.dataset.i)};
 $("practices").onclick=e=>{const b=e.target.closest(".prac");if(!b)return;prefs.practice=b.dataset.id;savePrefs();
-  if(prefs.practice==="chakras")cur=todayIdx;render()};
+  if(prefs.practice==="chakras")cur=todayIdx;render();$("pHome").querySelector(".hero").scrollIntoView({behavior:"smooth",block:"center"})};
+$("cats").onclick=e=>{const b=e.target.closest("[data-cat]");if(b){catSel=b.dataset.cat;renderPractices()}};
 $("cycleChips").onclick=e=>{const p=P(),b=e.target.closest("[data-cycle]");if(!p||!b)return;const s=progLoad(p);s.cycle=b.dataset.cycle;progSave(p,s);render()};
 $("restart").onclick=()=>{const p=P();if(!p||!confirm(`Start ${p.name} over from day 1? Your sits so far will be cleared.`))return;
   const s=progLoad(p);s.log={};progSave(p,s);render()};
-$("timeChips").onclick=e=>{const b=e.target.closest("[data-time]");if(!b)return;prefs.time[prefs.practice]=+b.dataset.time;savePrefs();render()};
+$("timeSel").onchange=e=>{prefs.time[prefs.practice]=+e.target.value;savePrefs();render()};
 $("karmaBtn").onclick=()=>{go("calendar");$("karma").scrollIntoView({block:"start"})};
+/* ---------- menu drawer ---------- */
+function renderRecent(){const h=histLoad(),out=[];
+  for(const k of Object.keys(h).sort((a,b)=>dayNum(b)-dayNum(a))){for(const e of [...h[k]].reverse()){if(out.length<5)out.push([k,e])}if(out.length>=5)break}
+  const day=k=>{const n=dayNum(dateKey())-dayNum(k);return n===0?"Today":n===1?"Yesterday":n<7?new Date(k.replace(/-/g,"/")).toLocaleDateString(undefined,{weekday:"long"}):new Date(k.replace(/-/g,"/")).toLocaleDateString(undefined,{day:"numeric",month:"short"})};
+  $("recent").innerHTML=out.length?out.map(([k,e])=>`<div class="rec"><i style="--c:${pColor(e[0])}"></i><span><b>${esc(pName(e[0]))}</b><small>${day(k)}${e[1]?` · ${minLabel(e[1]*60)}`:""}</small></span></div>`).join(""):`<p class="note">Your sits will show here.</p>`}
+function drawer(open){$("drawer").hidden=$("scrim").hidden=!open;$("menuBtn").setAttribute("aria-expanded",open);document.body.classList.toggle("drawerOpen",open);
+  if(open){renderRecent();renderMe();document.querySelectorAll("#dNav button").forEach(b=>b.toggleAttribute("aria-current",!b.dataset.to&&b.dataset.go===document.body.dataset.page))}}
+$("menuBtn").onclick=$("avatar").onclick=()=>drawer(true);
+$("scrim").onclick=()=>drawer(false);
+$("dNav").onclick=e=>{const b=e.target.closest("[data-go]");if(!b)return;drawer(false);go(b.dataset.go);if(b.dataset.to)$(b.dataset.to).scrollIntoView({block:"start"})};
+$("who").onclick=()=>{drawer(false);go("settings");$("setName").focus()};
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("drawer").hidden)drawer(false)});
 $("toast").onclick=()=>{$("toast").hidden=true;go("calendar");$("badgesCard").scrollIntoView({block:"start"})};
 $("calPrev").onclick=()=>{calMonth.setMonth(calMonth.getMonth()-1);renderCal()};
 $("calNext").onclick=()=>{calMonth.setMonth(calMonth.getMonth()+1);renderCal()};
@@ -509,7 +530,6 @@ $("qShare").onclick=async()=>{const d=new Date();d.setDate(d.getDate()+qOff);con
 
 // Settings: defaults for every practice.
 const SETTLES=[5,10,20,30],GOALS=[0,1,2,3,4,5,6,7];
-function applyTheme(){const r=document.documentElement;if(prefs.theme==="auto")delete r.dataset.theme;else r.dataset.theme=prefs.theme}
 function renderSettings(){
   $("setTime").innerHTML=[`<button data-time="0" aria-pressed="${!prefs.defTime}">Each practice's own</button>`,
     ...TIMES.map(m=>`<button data-time="${m}" aria-pressed="${prefs.defTime===m}">${timeLabel(m)}</button>`)].join("");
@@ -519,6 +539,8 @@ function renderSettings(){
   $("setGoal").innerHTML=GOALS.map(n=>`<button data-goal="${n}" aria-pressed="${prefs.goal===n}">${n||"Off"}</button>`).join("");
   $("setGoalNote").textContent=prefs.goal?`${prefs.goal} day${prefs.goal>1?"s":""} a week. Your progress shows on Home and in Calendar.`:"No weekly goal. Home shows your streak.";
   document.querySelectorAll("#setTheme button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.theme===prefs.theme));
+  $("setThemeNote").textContent=prefs.theme==="auto"?"Light from 6 am, dark from 6 pm.":prefs.theme==="dark"?"Dark all day.":"Light all day.";
+  if(document.activeElement!==$("setName"))$("setName").value=prefs.name||"";
 }
 $("setTime").onclick=e=>{const b=e.target.closest("[data-time]");if(!b)return;prefs.defTime=+b.dataset.time;prefs.time={};savePrefs();renderSettings()}; // a new default applies everywhere
 $("sGuided").onclick=()=>{prefs.mode="guided";savePrefs();renderSettings()};
@@ -526,14 +548,14 @@ $("sSilent").onclick=()=>{prefs.mode="silent";savePrefs();renderSettings()};
 $("setSettle").onclick=e=>{const b=e.target.closest("[data-settle]");if(!b)return;prefs.settle=SETTLE=+b.dataset.settle;savePrefs();renderSettings()};
 $("setGoal").onclick=e=>{const b=e.target.closest("[data-goal]");if(!b)return;prefs.goal=+b.dataset.goal;savePrefs();renderSettings();showCount()};
 $("setTheme").onclick=e=>{const b=e.target.closest("[data-theme]");if(!b)return;prefs.theme=b.dataset.theme;savePrefs();applyTheme();renderSettings()};
+$("setName").oninput=e=>{prefs.name=e.target.value.trim();savePrefs();renderMe()};
 $("clearHist").onclick=()=>{if(!confirm("Clear your practice history? Your calendar, streak, karma, badges and cycle days start again from zero."))return;
   try{for(const k of Object.keys(localStorage))if(/^sp-(hist|prog-|\d)/.test(k))localStorage.removeItem(k);localStorage.setItem("sp-hist","{}")}catch(e){}
   showCount();alert("History cleared.")};
 const setMode=m=>{prefs.mode=m;savePrefs();render()};
-$("mGuided").onclick=()=>setMode("guided");
-$("mSilent").onclick=()=>setMode("silent");
+$("modeSel").onchange=e=>setMode(e.target.value);
 // Timers stop when the phone locks, so pause cleanly instead of skipping ahead.
-document.addEventListener("visibilitychange",()=>{if(document.hidden&&running)pause("Paused (screen locked or app left)")});
+document.addEventListener("visibilitychange",()=>{if(document.hidden&&running)pause("Paused (screen locked or app left)");if(!document.hidden){applyTheme();greet()}});
 
 const getJSON=u=>fetch(u).then(r=>r.json());
 Promise.all([
@@ -547,7 +569,15 @@ Promise.all([
   if(prefs.practice!=="chakras"&&!PR[prefs.practice])prefs.practice="chakras";
   todayIdx=DAYS.findIndex(d=>d.dow===new Date().getDay());cur=todayIdx;
   greet();showCount();syncToggles();go((location.hash||"").slice(1));
+  hideSplash();
 });
+/* ---------- opening screen and first-open welcome ---------- */
+const splashAt=performance.now();
+function hideSplash(){const el=$("splash"),wait=Math.max(0,900-(performance.now()-splashAt));
+  setTimeout(()=>{if(!prefs.welcomed)$("welcome").hidden=false;el.classList.add("out");setTimeout(()=>el.hidden=true,500)},wait)}
+function welcomeDone(name){prefs.welcomed=true;if(name)prefs.name=name;savePrefs();renderMe();$("welcome").classList.add("out");setTimeout(()=>{$("welcome").hidden=true},400)}
+$("wForm").onsubmit=e=>{e.preventDefault();welcomeDone($("wName").value.trim())};
+$("wSkip").onclick=()=>welcomeDone("");
 
 if(!standalone&&/iPhone|iPad|iPod/.test(navigator.userAgent))$("install").classList.add("show");
 if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));

@@ -4,9 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Dhyana</title>
-<meta name="description" content="Daily meditation: the seven chakras, Yoga Nidra, Kriya, metta, body scan, So Hum and candle gazing.">
-<meta name="theme-color" content="#f5f1ea" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0f1115" media="(prefers-color-scheme: dark)">
+<meta name="description" content="Daily meditation: the seven chakras, Yoga Nidra, mindful meditation, metta, body scan, So Hum and candle gazing.">
+<meta name="theme-color" content="#f5f1ea" id="themeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Dhyana">
@@ -21,50 +20,60 @@
 </head>
 <body data-page="home">
 
-<!-- Home: today's practice -->
+<!-- Opening screen: fades out once the app has loaded -->
+<div id="splash" aria-hidden="true"><i class="glow"></i><span class="word">dhyana</span></div>
+
+<!-- First open: ask what to call you -->
+<div id="welcome" hidden>
+  <i class="glow" aria-hidden="true"></i>
+  <form class="wBox" id="wForm">
+    <span class="word">dhyana</span>
+    <h2>Welcome. What should we call you?</h2>
+    <input id="wName" type="text" autocomplete="given-name" autocapitalize="words" maxlength="40" placeholder="Your first name" aria-label="Your name">
+    <button class="begin" type="submit">Continue</button>
+    <button class="link" type="button" id="wSkip">Skip for now</button>
+  </form>
+</div>
+
+<!-- Home: greeting, today's practice, and every practice as a tile -->
 <main class="wrap page" id="pHome">
-  <header class="top">
-    <div>
-      <p class="hello" id="hello">Welcome</p>
-      <h1>Dhyana</h1>
+  <header class="homeTop">
+    <button class="iconbtn flat" id="menuBtn" aria-label="Open menu" aria-controls="drawer" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button>
+    <div class="homeRight">
+      <button class="karmaBtn" id="karmaBtn" aria-label="Karma points"><span class="kLvl"><i aria-hidden="true">✦</i><span id="karmaLvl">Seeker</span></span><b id="karmaPts">0</b></button>
+      <button class="avatar" id="avatar" aria-label="Open menu"></button>
     </div>
-    <button class="karmaBtn" id="karmaBtn" hidden aria-label="Karma points"><i aria-hidden="true">✦</i><b id="karmaPts">0</b></button>
   </header>
+
+  <h1 class="greet"><span id="hello">Welcome</span><span id="helloName"></span>.<br><em>Pick a practice</em> and <em>settle in</em></h1>
 
   <div class="install" id="install"><b>Add it to your home screen.</b> In Safari, tap Share, then Add to Home Screen. It opens full-screen, works offline, and plays sound with the silent switch on.</div>
 
-  <nav class="practices" id="practices" aria-label="Choose a practice"></nav>
-
   <section class="hero" aria-labelledby="poolTitle">
-    <div class="heroTop"><span class="pill" id="poolEyebrow"></span><span class="count" id="count"></span></div>
-    <h2 id="poolTitle"></h2>
-    <p class="heroSub" id="heroSub"></p>
-    <div class="heroFoot">
-      <div class="dial">
-        <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="track" cx="60" cy="60" r="54"/><circle class="prog" id="ringProg" cx="60" cy="60" r="54"/></svg>
-        <div class="time" id="clockTime">12:00</div>
-      </div>
-      <div class="heroInfo">
-        <div id="clockSub"></div>
-        <div class="progress" id="progWrap"><div class="track"><i id="progBar"></i></div><small id="progNote"></small></div>
-      </div>
+    <div class="heroBar"><span class="pill" id="poolEyebrow"></span><label class="sel" id="modeRow"><span class="vh">Guidance</span><select id="modeSel"><option value="guided">Guided</option><option value="silent">No guidance</option></select></label></div>
+    <div class="slot">
+      <i class="orb" aria-hidden="true"></i>
+      <h2 id="poolTitle"></h2>
+      <p class="heroSub" id="heroSub"></p>
+      <p class="count" id="count"></p>
+    </div>
+    <div class="heroRow">
+      <span class="roundIc" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7"/><path d="M12 13V9.5M10 3h4"/></svg></span>
+      <label class="sel"><span class="vh">Length</span><select id="timeSel"></select></label>
+      <button class="begin" id="begin">Begin</button>
     </div>
   </section>
 
   <nav class="days" id="days" aria-label="Choose a day"></nav>
 
-  <section class="opts" aria-label="Session options">
-    <div class="opt" id="modeRow">
-      <span class="label">Session</span>
-      <div class="seg"><button id="mGuided" aria-pressed="true">Guided</button><button id="mSilent" aria-pressed="false">No guidance</button></div>
-    </div>
-    <div class="opt"><span class="label">Time</span><div class="chips scroll" id="timeChips"></div></div>
-    <div class="opt" id="cycle" hidden>
-      <span class="label">Cycle</span>
-      <div class="seg" id="cycleChips"></div>
-      <p class="note"><span id="cycleNote"></span> <button class="link" id="restart">Start over</button></p>
-    </div>
-  </section>
+  <div class="cats" id="cats" role="group" aria-label="Filter practices"></div>
+  <nav class="practices" id="practices" aria-label="Choose a practice"></nav>
+
+  <div class="opt" id="cycle" hidden>
+    <span class="label">Cycle</span>
+    <div class="seg" id="cycleChips"></div>
+    <p class="note"><span id="cycleNote"></span> <button class="link" id="restart">Start over</button></p>
+  </div>
 
   <details class="card" id="flow">
     <summary><span>What happens</span><small id="flowMeta"></small></summary>
@@ -131,6 +140,11 @@
   <header class="top"><div><p class="hello">Defaults for every practice</p><h1>Settings</h1></div></header>
 
   <section class="card group">
+    <h3>Profile</h3>
+    <div class="opt"><label class="label" for="setName">Your name</label><input class="field" id="setName" type="text" autocomplete="given-name" autocapitalize="words" maxlength="40" placeholder="Used in the greeting"></div>
+  </section>
+
+  <section class="card group">
     <h3>Sessions</h3>
     <div class="opt"><span class="label">Length</span><div class="chips scroll" id="setTime"></div>
       <p class="note">Used by every practice that can fit it. You can still change one practice's time on Home.</p></div>
@@ -157,6 +171,7 @@
   <section class="card group">
     <h3>Appearance</h3>
     <div class="seg" id="setTheme"><button data-theme="auto">Automatic</button><button data-theme="light">Light</button><button data-theme="dark">Dark</button></div>
+    <p class="note" id="setThemeNote"></p>
   </section>
 
   <section class="card group">
@@ -179,8 +194,6 @@
 
   <p class="credit">Voice by <a href="https://elevenlabs.io" target="_blank" rel="noopener">ElevenLabs</a></p>
 </main>
-
-<div class="bar"><button class="begin" id="begin">Begin</button></div>
 
 <nav class="tabs" aria-label="Sections">
   <button data-go="home" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-6.5 8 6.5V19a1.5 1.5 0 0 1-1.5 1.5H15v-5.5h-6v5.5H5.5A1.5 1.5 0 0 1 4 19z"/></svg><span>Home</span></button>
@@ -208,6 +221,21 @@
 </div>
 
 <div class="toast" id="toast" role="status" hidden></div>
+
+<!-- Menu drawer -->
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" aria-label="Menu" hidden>
+  <nav class="dNav" id="dNav">
+    <button data-go="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-6.5 8 6.5V19a1.5 1.5 0 0 1-1.5 1.5H15v-5.5h-6v5.5H5.5A1.5 1.5 0 0 1 4 19z"/></svg>Home</button>
+    <button data-go="today"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.6"/><path d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M5.6 18.4l1.6-1.6M16.8 7.2l1.6-1.6"/></svg>Today</button>
+    <button data-go="calendar"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="3"/><path d="M4 10h16M9 3.5v4M15 3.5v4"/></svg>Calendar</button>
+    <button data-go="calendar" data-to="karma"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.3 6L12 16.4 6.6 19.4l1.3-6L3.4 9.3l6-.7z"/></svg>Karma &amp; badges</button>
+    <button data-go="settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Settings</button>
+  </nav>
+  <h5>Recent sits</h5>
+  <div class="recent" id="recent"></div>
+  <button class="who" id="who"><span class="avatar" id="dAvatar"></span><span><b id="dName"></b><small id="dKarma"></small></span></button>
+</aside>
 
 <script src="app.js"></script>
 </body>
