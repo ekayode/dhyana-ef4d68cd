@@ -4,7 +4,7 @@
 //   node tools/voice.mjs key                 save your ElevenLabs API key (hidden input, stored outside the project)
 //   node tools/voice.mjs voices              list the voices on your account; ★ marks calm / soft ones
 //   node tools/voice.mjs audition [ids...]   record and play a short sample for each voice (default: the ★ ones); --no-play to only save
-//   node tools/voice.mjs record <voiceId>    record all lines; unchanged lines are skipped. --force re-records everything
+//   node tools/voice.mjs record <voiceId>    record all lines; unchanged lines are skipped. --force re-records everything, --dry lists what would be recorded
 //   node tools/voice.mjs play <clipId>       play one recording, e.g. fri-arrive or common-in_a
 //
 // The key is read from ELEVENLABS_API_KEY, or from ~/.config/seven-pools/elevenlabs_key.
@@ -156,6 +156,7 @@ const commands = {
     });
     const chars = todo.reduce((a, [, t]) => a + t.length, 0);
     console.log(`Recording ${todo.length} of ${Object.keys(lines).length} lines with ${voice.name} (~${chars} characters).`);
+    if (flag === "--dry") { for (const [id, t] of todo) console.log(`  ${id.padEnd(20)} ${t.length} chars`); console.log("Dry run: nothing recorded."); return; }
     const c = await credits(); if (c) console.log(c);
     let n = 0;
     for (const [id, text] of todo) {
