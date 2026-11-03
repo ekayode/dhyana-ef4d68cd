@@ -104,7 +104,7 @@ const minLabel=s=>{const m=s/60;if(m>=59.5){const h=Math.floor((m+.5)/60),r=Math
   return (Number.isInteger(m)?m:Math.floor(m)+(m%1>=.5?"½":""))+" min"};
 function dateKey(){const n=new Date();return n.getFullYear()+"-"+(n.getMonth()+1)+"-"+n.getDate()}
 /* ---------- history: every finished sit, for the calendar and streak ---------- */
-// sp-hist: {"2026-10-30": [["kriya", 15], ["chakras", 12.5]]} — practice id and minutes (null for sits logged before minutes were kept).
+// sp-hist: {"2026-10-30": [["kriya", 15, 7], ["chakras", 12.5]]} — practice id, minutes (null for sits logged before minutes were kept) and the hour it ended (newer sits only).
 const keyOf=d=>d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();
 function histLoad(){try{const h=localStorage.getItem("sp-hist");if(h)return JSON.parse(h)}catch(e){return {}}
   // First run: rebuild from the older per-day counts and per-practice logs.
@@ -116,7 +116,7 @@ function histLoad(){try{const h=localStorage.getItem("sp-hist");if(h)return JSON
       const extra=(+localStorage.getItem(k)||0)-(h[m[1]]||[]).length;for(let i=0;i<extra;i++)(h[m[1]]=h[m[1]]||[]).push(["chakras",null])}
     localStorage.setItem("sp-hist",JSON.stringify(h))}catch(e){}
   return h}
-function histAdd(id,mins){const h=histLoad(),k=dateKey();(h[k]=h[k]||[]).push([id,mins]);try{localStorage.setItem("sp-hist",JSON.stringify(h))}catch(e){}}
+function histAdd(id,mins){const h=histLoad(),k=dateKey();(h[k]=h[k]||[]).push([id,mins,new Date().getHours()]);try{localStorage.setItem("sp-hist",JSON.stringify(h))}catch(e){}}
 function streak(h=histLoad()){const d=new Date();if(!h[keyOf(d)])d.setDate(d.getDate()-1);let n=0;while(h[keyOf(d)]){n++;d.setDate(d.getDate()-1)}return n}
 const pColor=id=>id==="chakras"?"#c2413a":(PR[id]&&PR[id].c)||"#888";
 const pName=id=>id==="chakras"?"Seven chakras":(PR[id]&&PR[id].name)||id;
@@ -126,7 +126,82 @@ function weekDays(h=histLoad()){const d=new Date(),back=(d.getDay()+6)%7;let n=0
 function showCount(){const h=histLoad(),st=streak(h),wk=weekDays(h),parts=[];
   if(st>1)parts.push(`${st}-day streak`);if(prefs.goal)parts.push(`${Math.min(wk,prefs.goal)} of ${prefs.goal} this week`);
   else if(readCount())parts.push(`${readCount()} today`);
-  $("count").textContent=parts.join(" · ")}
+  $("count").textContent=parts.join(" · ");
+  const k=karmaOf().total;$("karmaBtn").hidden=!k;$("karmaPts").textContent=fmtK(k)}
+
+/* ---------- karma and badges: worked out from history each time, so they always match the calendar ---------- */
+const KARMA={sit:10,perMin:1,minCap:60,sitsPerDay:3,streakStep:5,streakCap:50,goal:50,explore:25};
+const LEVELS=[[0,"Seeker"],[150,"Sprout"],[500,"Steady"],[1200,"Lotus"],[2500,"Still water"],[5000,"Sage"],[10000,"Bodhi"]];
+const dayNum=k=>{const [y,m,d]=k.split("-").map(Number);return Math.round(Date.UTC(y,m-1,d)/864e5)};
+const weekOf=n=>Math.floor((n+3)/7); // weeks run Monday to Sunday
+const satDays=h=>Object.keys(h).filter(k=>h[k]&&h[k].length).sort((a,b)=>dayNum(a)-dayNum(b));
+// Up to three sits a day earn points, so the total rewards showing up, not stacking sessions.
+function karmaOf(h=histLoad()){const by={sits:0,streak:0,goal:0,explore:0},seen=new Set(),weeks={};let run=0,prev=null;
+  for(const k of satDays(h)){const n=dayNum(k);run=prev!=null&&n===prev+1?run+1:1;prev=n;
+    for(const [id,m] of h[k].slice(0,KARMA.sitsPerDay)){by.sits+=KARMA.sit+Math.min(KARMA.minCap,Math.round(m??10)*KARMA.perMin);
+      if(!seen.has(id)){seen.add(id);by.explore+=KARMA.explore}}
+    by.streak+=Math.min(KARMA.streakCap,KARMA.streakStep*(run-1));
+    const w=weekOf(n);weeks[w]=(weeks[w]||0)+1;if(prefs.goal&&weeks[w]===prefs.goal)by.goal+=KARMA.goal}
+  return {...by,total:by.sits+by.streak+by.goal+by.explore}}
+function levelOf(pts){let i=0;while(i+1<LEVELS.length&&pts>=LEVELS[i+1][0])i++;
+  const [at,name]=LEVELS[i],next=LEVELS[i+1];return {i,name,at,next:next&&next[0],nextName:next&&next[1]}}
+// One pass over history for everything the badges look at.
+const MONTH_DAYS=12; // a month "counts" with 12 or more days sat, about three a week
+function journey(h=histLoad()){const days=satDays(h),nums=days.map(dayNum),all=days.flatMap(k=>h[k]);
+  const runs=list=>{let best=0,r=0;list.forEach((x,i)=>{r=i&&x===list[i-1]+1?r+1:1;best=Math.max(best,r)});return best};
+  const perMonth={},perWeek={};days.forEach(k=>{const [y,m]=k.split("-").map(Number),mi=y*12+m-1;perMonth[mi]=(perMonth[mi]||0)+1;
+    const w=weekOf(dayNum(k));perWeek[w]=(perWeek[w]||0)+1});
+  const months=Object.keys(perMonth).map(Number).filter(m=>perMonth[m]>=MONTH_DAYS).sort((a,b)=>a-b);
+  const goalWeeks=prefs.goal?Object.keys(perWeek).map(Number).filter(w=>perWeek[w]>=prefs.goal).sort((a,b)=>a-b):[];
+  const now=new Date(),mNow=now.getFullYear()*12+now.getMonth(),monthRun=()=>{let m=perMonth[mNow]>=MONTH_DAYS?mNow:mNow-1,r=0;while(perMonth[m]>=MONTH_DAYS){r++;m--}return r};
+  return {sits:all.length,mins:all.reduce((a,e)=>a+(e[1]||0),0),best:runs(nums),cur:streak(h),
+    months:runs(months),monthsNow:monthRun(),thisMonth:perMonth[mNow]||0,
+    fullMonth:Object.keys(perMonth).some(m=>perMonth[m]===new Date(Math.floor(m/12),m%12+1,0).getDate()),
+    goalRun:runs(goalWeeks),tried:new Set(all.map(e=>e[0])).size,
+    early:all.some(e=>e[2]!=null&&e[2]<7),late:all.some(e=>e[2]!=null&&e[2]>=22),
+    cycle:ORDER.some(id=>{const s=progLoad(PR[id]);return s.log&&progress(PR[id]).complete})}}
+// [id, group, mark, name, what it takes, value it's earned on, target, value shown as progress (defaults to the earned one)]
+const BADGES=[
+  ["first","Streaks","1","First sit","Finish your first session",j=>j.sits,1],
+  ["s3","Streaks","3","Three in a row","Sit 3 days in a row",j=>j.best,3,j=>j.cur],
+  ["s5","Streaks","5","Five in a row","Sit 5 days in a row",j=>j.best,5,j=>j.cur],
+  ["s7","Streaks","7","A full week","Sit 7 days in a row",j=>j.best,7,j=>j.cur],
+  ["s14","Streaks","14","Two weeks","Sit 14 days in a row",j=>j.best,14,j=>j.cur],
+  ["s21","Streaks","21","Twenty-one days","Sit 21 days in a row, the length of a cycle",j=>j.best,21,j=>j.cur],
+  ["s40","Streaks","40","Mandala","Sit 40 days in a row",j=>j.best,40,j=>j.cur],
+  ["s108","Streaks","108","Mala","Sit 108 days in a row",j=>j.best,108,j=>j.cur],
+  ["s365","Streaks","365","Unbroken year","Sit every day for a year",j=>j.best,365,j=>j.cur],
+  ["m1","Months","1M","A month of practice",`Sit ${MONTH_DAYS} days in one month`,j=>j.months?MONTH_DAYS:j.thisMonth,MONTH_DAYS],
+  ["m3","Months","3M","Three months running",`${MONTH_DAYS}+ days a month, 3 months in a row`,j=>j.months,3,j=>j.monthsNow],
+  ["m6","Months","6M","Half a year",`${MONTH_DAYS}+ days a month, 6 months in a row`,j=>j.months,6,j=>j.monthsNow],
+  ["m12","Months","12M","A year of months",`${MONTH_DAYS}+ days a month, 12 months in a row`,j=>j.months,12,j=>j.monthsNow],
+  ["full","Months","★","Perfect month","Sit every day of a calendar month",j=>j.fullMonth?1:0,1],
+  ["n10","Practice","10","Ten sits","Finish 10 sessions",j=>j.sits,10],
+  ["n108","Practice","108","A full mala","Finish 108 sessions",j=>j.sits,108],
+  ["n365","Practice","365","Three sixty-five","Finish 365 sessions",j=>j.sits,365],
+  ["h10","Practice","10h","Ten hours","Sit for 10 hours in total",j=>Math.floor(j.mins/60),10],
+  ["h100","Practice","100h","A hundred hours","Sit for 100 hours in total",j=>Math.floor(j.mins/60),100],
+  ["goal4","Practice","✓","Goal keeper","Meet your weekly goal 4 weeks in a row",j=>j.goalRun,4],
+  ["try3","Explore","3","Explorer","Try 3 different practices",j=>j.tried,3],
+  ["tryall","Explore","7","Every pool","Try all 7 practices",j=>j.tried,7],
+  ["cycle","Explore","↻","Cycle complete","Finish a full cycle of any practice",j=>j.cycle?1:0,1],
+  ["early","Explore","☀","Early riser","Finish a sit before 7 am",j=>j.early?1:0,1],
+  ["late","Explore","☾","Night owl","Finish a sit after 10 pm",j=>j.late?1:0,1],
+].map(([id,group,mark,name,desc,val,goal,now])=>({id,group,mark,name,desc,val,goal,now:now||val}));
+const earned=(j=journey())=>BADGES.filter(b=>b.val(j)>=b.goal).map(b=>b.id);
+const fmtK=n=>n.toLocaleString();
+function renderKarma(){const k=karmaOf(),lv=levelOf(k.total),j=journey(),got=new Set(earned(j));
+  $("kPts").textContent=fmtK(k.total);$("kLevel").textContent=lv.name;
+  $("kBar").style.width=lv.next?Math.min(100,(k.total-lv.at)/(lv.next-lv.at)*100)+"%":"100%";
+  $("kNext").textContent=lv.next?`${fmtK(lv.next-k.total)} to ${lv.nextName}`:"The highest level. Keep sitting.";
+  $("kRules").innerHTML=[[`Each sit: ${KARMA.sit} + 1 per minute (up to ${KARMA.minCap}), up to ${KARMA.sitsPerDay} sits a day`,k.sits],
+    [`Streaks: +${KARMA.streakStep} for each day in a row, up to +${KARMA.streakCap} a day`,k.streak],
+    [`Weekly goal met: +${KARMA.goal}${prefs.goal?"":" (set a goal in Settings)"}`,k.goal],
+    [`First time with a practice: +${KARMA.explore}`,k.explore]].map(([t,v])=>`<li><span>${esc(t)}</span><b>${fmtK(v)}</b></li>`).join("");
+  $("bCount").textContent=`${got.size} of ${BADGES.length}`;
+  $("badges").innerHTML=[...new Set(BADGES.map(b=>b.group))].map(g=>`<h4>${g}</h4><div class="bgrid">${BADGES.filter(b=>b.group===g).map(b=>{
+      const on=got.has(b.id),p=Math.min(b.goal,b.now(j));
+      return `<div class="badge${on?" on":""}" data-g="${g}"><i>${b.mark}</i><b>${esc(b.name)}</b><small>${on?esc(b.desc):b.goal>1&&p>0?`${p} of ${b.goal}`:esc(b.desc)}</small></div>`}).join("")}</div>`).join("")}
 
 let calMonth=new Date();calMonth.setDate(1);let calSel=null;
 function renderCal(){
@@ -151,7 +226,7 @@ function renderCal(){
 function weekSummary(){const h=histLoad(),d=new Date(),lines=[];let days=0,mins=0;
   for(let i=6;i>=0;i--){const x=new Date(d);x.setDate(d.getDate()-i);const l=h[keyOf(x)]||[];if(l.length)days++;mins+=l.reduce((a,e)=>a+(e[1]||0),0);
     lines.push(`${x.toLocaleDateString(undefined,{weekday:"short"})} ${l.length?"●":"○"}`)}
-  return `My meditation week: ${days} of 7 days, ${Math.round(mins)} minutes, ${streak(h)}-day streak.\n${lines.join("  ")}\nSit with me: ${location.origin+location.pathname}`}
+  return `My meditation week: ${days} of 7 days, ${Math.round(mins)} minutes, ${streak(h)}-day streak, ${fmtK(karmaOf(h).total)} karma.\n${lines.join("  ")}\nSit with me: ${location.origin+location.pathname}`}
 function greet(){const h=new Date().getHours();$("hello").textContent=h<5?"Good night":h<12?"Good morning":h<18?"Good afternoon":"Good evening"}
 function savePrefs(){try{localStorage.setItem("sp-prefs",JSON.stringify(prefs))}catch(e){}}
 function syncToggles(){const can=!!CLIPS||canSpeak;$("tVoice").setAttribute("aria-pressed",prefs.voice&&can);$("tTones").setAttribute("aria-pressed",prefs.tones);
@@ -363,9 +438,14 @@ function tick(){
   }
 }
 function finish(){stop();stopVoice();inSession=false;bell(3);if(guided())setTimeout(()=>playClip(clipId("complete")),4200);
-  histAdd(prefs.practice,Math.round(total()/30)/2);showCount();
-  const p=P();if(p){logSit(p);render()}done=true;drawClock();
-  setTimeout(()=>{$("sit").hidden=true},7500)}
+  const k0=karmaOf().total,b0=new Set(earned());
+  histAdd(prefs.practice,Math.round(total()/30)/2);
+  const p=P();if(p){logSit(p);render()}done=true;drawClock();showCount();
+  const fresh=BADGES.filter(b=>!b0.has(b.id)&&earned().includes(b.id)),gain=karmaOf().total-k0;
+  $("sitReward").innerHTML=(gain>0?`<b>+${fmtK(gain)} karma</b>`:"")+fresh.map(b=>`<span>New badge · ${esc(b.name)}</span>`).join("");
+  $("sitReward").hidden=!$("sitReward").innerHTML;
+  setTimeout(()=>{$("sit").hidden=true;$("sitReward").hidden=true;if(fresh.length)toast(`New badge: ${fresh.map(b=>b.name).join(", ")}`)},fresh.length?10000:7500)}
+function toast(t){const el=$("toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,4500)}
 function stop(){running=false;clearInterval(timer);timer=null;try{wake&&wake.release()}catch(e){}wake=null}
 function pause(why){if(!running)return;stop();holdVoice();$("sitLive").hidden=true;$("paused").hidden=false;
   const s=segI<0?"settling":`step ${segI+1}, ${segs[segI].name}`;$("pausedNote").textContent=(why||"Paused")+` during ${s}`}
@@ -386,6 +466,8 @@ $("cycleChips").onclick=e=>{const p=P(),b=e.target.closest("[data-cycle]");if(!p
 $("restart").onclick=()=>{const p=P();if(!p||!confirm(`Start ${p.name} over from day 1? Your sits so far will be cleared.`))return;
   const s=progLoad(p);s.log={};progSave(p,s);render()};
 $("timeChips").onclick=e=>{const b=e.target.closest("[data-time]");if(!b)return;prefs.time[prefs.practice]=+b.dataset.time;savePrefs();render()};
+$("karmaBtn").onclick=()=>{go("calendar");$("karma").scrollIntoView({block:"start"})};
+$("toast").onclick=()=>{$("toast").hidden=true;go("calendar");$("badgesCard").scrollIntoView({block:"start"})};
 $("calPrev").onclick=()=>{calMonth.setMonth(calMonth.getMonth()-1);renderCal()};
 $("calNext").onclick=()=>{calMonth.setMonth(calMonth.getMonth()+1);renderCal()};
 $("calGrid").onclick=e=>{const b=e.target.closest(".cday");if(b){calSel=b.dataset.k;renderCal()}};
@@ -399,7 +481,7 @@ function go(name){if(!PAGES[name])name="home";
   document.querySelectorAll(".tabs button").forEach(b=>b.dataset.go===name?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
   document.body.dataset.page=name;
   if(name==="today")renderQuote();
-  if(name==="calendar"){calMonth=new Date();calMonth.setDate(1);calSel=null;renderCal()}
+  if(name==="calendar"){calMonth=new Date();calMonth.setDate(1);calSel=null;renderCal();renderKarma()}
   if(name==="settings")renderSettings();
   if(name==="home")render();
   try{history.replaceState(null,"",name==="home"?location.pathname:"#"+name)}catch(e){}
@@ -444,7 +526,7 @@ $("sSilent").onclick=()=>{prefs.mode="silent";savePrefs();renderSettings()};
 $("setSettle").onclick=e=>{const b=e.target.closest("[data-settle]");if(!b)return;prefs.settle=SETTLE=+b.dataset.settle;savePrefs();renderSettings()};
 $("setGoal").onclick=e=>{const b=e.target.closest("[data-goal]");if(!b)return;prefs.goal=+b.dataset.goal;savePrefs();renderSettings();showCount()};
 $("setTheme").onclick=e=>{const b=e.target.closest("[data-theme]");if(!b)return;prefs.theme=b.dataset.theme;savePrefs();applyTheme();renderSettings()};
-$("clearHist").onclick=()=>{if(!confirm("Clear your practice history? Your calendar, streak and cycle days start again from zero."))return;
+$("clearHist").onclick=()=>{if(!confirm("Clear your practice history? Your calendar, streak, karma, badges and cycle days start again from zero."))return;
   try{for(const k of Object.keys(localStorage))if(/^sp-(hist|prog-|\d)/.test(k))localStorage.removeItem(k);localStorage.setItem("sp-hist","{}")}catch(e){}
   showCount();alert("History cleared.")};
 const setMode=m=>{prefs.mode=m;savePrefs();render()};

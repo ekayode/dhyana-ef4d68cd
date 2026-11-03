@@ -28,6 +28,7 @@
       <p class="hello" id="hello">Welcome</p>
       <h1>Dhyana</h1>
     </div>
+    <button class="karmaBtn" id="karmaBtn" hidden aria-label="Karma points"><i aria-hidden="true">✦</i><b id="karmaPts">0</b></button>
   </header>
 
   <div class="install" id="install"><b>Add it to your home screen.</b> In Safari, tap Share, then Add to Home Screen. It opens full-screen, works offline, and plays sound with the silent switch on.</div>
@@ -102,6 +103,11 @@
 <!-- Calendar: what you've practised -->
 <main class="wrap page" id="pCal" hidden>
   <header class="top"><div><p class="hello">Your practice</p><h1>Calendar</h1></div></header>
+  <section class="card karma" id="karma">
+    <div class="kTop"><div><span class="label">Karma</span><b class="kPts" id="kPts">0</b></div><span class="pill" id="kLevel"></span></div>
+    <div class="progress"><div class="track"><i id="kBar"></i></div><small id="kNext"></small></div>
+    <details><summary>How you earn it</summary><ul class="kRules" id="kRules"></ul></details>
+  </section>
   <div class="stats" id="calStats"></div>
   <div class="progress goal" id="goalWrap"><div class="track"><i id="goalBar"></i></div><small id="goalNote"></small></div>
   <section class="card calCard">
@@ -114,6 +120,10 @@
     <p class="note" id="calDay"></p>
   </section>
   <button class="share" id="shareWeek">Share my week</button>
+  <section class="card group" id="badgesCard">
+    <div class="kTop"><h3>Badges</h3><small class="note" id="bCount"></small></div>
+    <div id="badges"></div>
+  </section>
 </main>
 
 <!-- Settings: defaults for every practice -->
@@ -189,12 +199,15 @@
     <div class="big step" id="sitStep"></div>
     <div class="small" id="sitSub"></div>
     <div class="small hint">Eyes closed · tap once to pause</div>
+    <div class="reward" id="sitReward" hidden></div>
   </div>
   <div id="paused" hidden>
     <p id="pausedNote">Paused</p>
     <div class="row"><button id="resume">Resume</button><button id="end">End session</button></div>
   </div>
 </div>
+
+<div class="toast" id="toast" role="status" hidden></div>
 
 <script src="app.js"></script>
 </body>

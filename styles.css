@@ -2,7 +2,7 @@
    During the sit, a black eyes-closed screen. --chakra is the current practice's colour, set from app.js. */
 :root{
   --bg:#f5f1ea; --surface:#fffdf9; --sunk:#efe9df; --fg:#24211d; --muted:#767066; --line:#e7e0d4;
-  --chakra:#c2413a;
+  --chakra:#c2413a; --karma:#c08a2e;
   --display:"Fraunces","Iowan Old Style",Georgia,serif;
   --body:"DM Sans","Helvetica Neue",Arial,sans-serif;
   --radius:22px; --shadow:0 1px 2px rgb(60 45 20 / .05),0 10px 30px -12px rgb(60 45 20 / .14);
@@ -230,3 +230,33 @@ dialog::backdrop{background:rgb(10 10 12 / .35);-webkit-backdrop-filter:blur(3px
 #paused .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
 #paused button{font-weight:600;border-radius:999px;padding:12px 26px;cursor:pointer;border:1px solid #444;background:#111;color:#ccc}
 #paused p{color:#888;margin:0;font-size:14px;max-width:300px}
+
+/* Karma and badges */
+.karmaBtn{appearance:none;border:0;background:var(--surface);box-shadow:var(--shadow);border-radius:999px;padding:8px 14px 8px 11px;display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;font-variant-numeric:tabular-nums}
+.karmaBtn i{font-style:normal;color:var(--karma)}
+.karma{padding:18px 20px;display:flex;flex-direction:column;gap:12px;
+  background:radial-gradient(120% 90% at 100% 0%,color-mix(in srgb,var(--karma) 22%,transparent),transparent 60%),var(--surface)}
+.kTop{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.kTop .label{display:block}
+.kPts{font-family:var(--display);font-weight:500;font-size:40px;line-height:1.05;font-variant-numeric:tabular-nums}
+.karma .pill{background:color-mix(in srgb,var(--karma) 16%,var(--surface));color:color-mix(in srgb,var(--karma) 70%,var(--fg))}
+.karma .progress .track{background:color-mix(in srgb,var(--karma) 12%,var(--sunk))}
+.karma .progress i{background:var(--karma)}
+.karma details summary{padding:4px 0 0;font-size:14px}
+.kRules{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--muted)}
+.kRules li{display:flex;justify-content:space-between;gap:12px}
+.kRules b{color:var(--fg);font-variant-numeric:tabular-nums}
+#badges h4{margin:6px 0 8px;font-size:13px;font-weight:600;color:var(--muted)}
+.bgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.badge{display:flex;flex-direction:column;align-items:center;text-align:center;gap:3px;padding:12px 6px;border-radius:16px;background:var(--sunk)}
+.badge i{--b:var(--karma);width:46px;height:46px;border-radius:50%;display:grid;place-items:center;margin-bottom:4px;font-style:normal;font-family:var(--display);font-size:15px;font-weight:500;
+  color:var(--muted);border:1.5px dashed color-mix(in srgb,var(--muted) 45%,transparent)}
+.badge[data-g="Streaks"] i{--b:#d0782a}.badge[data-g="Months"] i{--b:#3f7fb5}.badge[data-g="Practice"] i{--b:#2f8f83}.badge[data-g="Explore"] i{--b:#c25a86}
+.badge.on i{border:0;color:#fff;background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--b) 45%,#fff),var(--b) 72%);box-shadow:0 6px 16px -6px var(--b)}
+.badge b{font-size:12px;font-weight:600;line-height:1.25}
+.badge small{font-size:11px;color:var(--muted);line-height:1.3}
+.badge:not(.on) b{color:var(--muted)}
+#sit .reward{margin-top:18px;display:flex;flex-direction:column;gap:6px;color:#8a7a5a;font-size:14px}
+#sit .reward b{font-weight:600;color:#c9a35e;font-size:16px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:30;max-width:min(90vw,420px);
+  background:var(--fg);color:var(--bg);border-radius:999px;padding:12px 18px;font-size:14px;font-weight:600;box-shadow:var(--shadow);animation:up .3s ease;cursor:pointer}
