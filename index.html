@@ -189,6 +189,13 @@
   <section class="card group">
     <h3>Your data</h3>
     <p class="note">Your history, cycles and settings stay on this phone.</p>
+    <form class="pastForm" id="pastForm">
+      <h4>Add a past session</h4>
+      <div class="opt"><label class="label" for="pastPractice">Practice</label><select class="field" id="pastPractice"></select></div>
+      <div class="opt"><label class="label" for="pastWhen">When</label><input class="field" id="pastWhen" type="datetime-local" required></div>
+      <div class="opt"><label class="label" for="pastMins">Minutes</label><input class="field" id="pastMins" type="number" inputmode="decimal" min="1" max="240" step="0.5" value="15" required></div>
+      <button class="link" type="submit">Add session</button>
+    </form>
     <button class="link" id="clearHist">Clear practice history</button>
   </section>
 

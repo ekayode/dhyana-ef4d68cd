@@ -121,6 +121,15 @@ function histLoad(){try{const h=localStorage.getItem("sp-hist");if(h)return JSON
     localStorage.setItem("sp-hist",JSON.stringify(h))}catch(e){}
   return h}
 function histAdd(id,mins){const h=histLoad(),k=dateKey();(h[k]=h[k]||[]).push([id,mins,new Date().getHours()]);try{localStorage.setItem("sp-hist",JSON.stringify(h))}catch(e){}}
+// A sit from an earlier day, in the same places a finished sit is recorded.
+function addPast(id,d,mins){const h=histLoad(),k=keyOf(d);(h[k]=h[k]||[]).push([id,mins,d.getHours()]);h[k].sort((a,b)=>(a[2]??-1)-(b[2]??-1));
+  try{localStorage.setItem("sp-hist",JSON.stringify(h))}catch(e){}
+  if(PR[id]){const s=progLoad(PR[id]);s.cycle=s.cycle||PR[id].defaultCycle;s.log=s.log||{};s.log[k]=(s.log[k]||0)+1;progSave(PR[id],s)}}
+// One time only: sits lost when the app moved to its new address, as remembered. Times and the chakra lengths are estimates.
+function restoreSits(){try{if(localStorage.getItem("sp-restored-1"))return;
+  [["chakras",2026,9,29,8,12],["chakras",2026,9,30,8,12],["nidra",2026,9,30,21,15],["chakras",2026,10,2,8,12]].forEach(([id,y,m,day,hr,mins])=>{
+    const d=new Date(y,m,day,hr);if(!(histLoad()[keyOf(d)]||[]).some(e=>e[0]===id))addPast(id,d,mins)});
+  localStorage.setItem("sp-restored-1","1")}catch(e){}}
 function streak(h=histLoad()){const d=new Date();if(!h[keyOf(d)])d.setDate(d.getDate()-1);let n=0;while(h[keyOf(d)]){n++;d.setDate(d.getDate()-1)}return n}
 const pColor=id=>id==="chakras"?"#c2413a":(PR[id]&&PR[id].c)||"#888";
 const pName=id=>id==="chakras"?"Seven chakras":(PR[id]&&PR[id].name)||id;
@@ -541,6 +550,7 @@ function renderSettings(){
   document.querySelectorAll("#setTheme button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.theme===prefs.theme));
   $("setThemeNote").textContent=prefs.theme==="auto"?"Light from 6 am, dark from 6 pm.":prefs.theme==="dark"?"Dark all day.":"Light all day.";
   if(document.activeElement!==$("setName"))$("setName").value=prefs.name||"";
+  const ps=$("pastPractice"),keep=ps.value||prefs.practice;ps.innerHTML=["chakras",...ORDER].map(id=>`<option value="${id}">${esc(pName(id))}</option>`).join("");ps.value=keep;
 }
 $("setTime").onclick=e=>{const b=e.target.closest("[data-time]");if(!b)return;prefs.defTime=+b.dataset.time;prefs.time={};savePrefs();renderSettings()}; // a new default applies everywhere
 $("sGuided").onclick=()=>{prefs.mode="guided";savePrefs();renderSettings()};
@@ -552,6 +562,9 @@ $("setName").oninput=e=>{prefs.name=e.target.value.trim();savePrefs();renderMe()
 $("clearHist").onclick=()=>{if(!confirm("Clear your practice history? Your calendar, streak, karma, badges and cycle days start again from zero."))return;
   try{for(const k of Object.keys(localStorage))if(/^sp-(hist|prog-|\d)/.test(k))localStorage.removeItem(k);localStorage.setItem("sp-hist","{}")}catch(e){}
   showCount();alert("History cleared.")};
+$("pastForm").onsubmit=e=>{e.preventDefault();const d=new Date($("pastWhen").value),mins=+$("pastMins").value;
+  if(isNaN(d)||d>new Date()){toast("Pick a date and time that has already passed.");return}
+  addPast($("pastPractice").value,d,mins);showCount();$("pastWhen").value="";toast(`Added ${pName($("pastPractice").value)}.`)};
 const setMode=m=>{prefs.mode=m;savePrefs();render()};
 $("modeSel").onchange=e=>setMode(e.target.value);
 // Timers stop when the phone locks, so pause cleanly instead of skipping ahead.
@@ -567,6 +580,7 @@ Promise.all([
   DATA=data;DAYS=data.days;SETTLE=prefs.settle||data.settleSeconds||10;QUOTES=daily;CLIPS=clips&&clips.clips?clips:null;
   practices.forEach(p=>PR[p.id]=p);ORDER=practices.map(p=>p.id);
   if(prefs.practice!=="chakras"&&!PR[prefs.practice])prefs.practice="chakras";
+  restoreSits();
   todayIdx=DAYS.findIndex(d=>d.dow===new Date().getDay());cur=todayIdx;
   greet();showCount();syncToggles();go((location.hash||"").slice(1));
   hideSplash();

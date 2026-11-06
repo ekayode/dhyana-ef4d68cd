@@ -321,3 +321,7 @@ dialog::backdrop{background:rgb(10 10 12 / .35);-webkit-backdrop-filter:blur(3px
 .who b{display:block;font-size:15px;font-weight:500}
 .who small{font-size:12px;color:var(--karma)}
 body.drawerOpen{overflow:hidden}
+.pastForm{display:flex;flex-direction:column;gap:12px;padding:6px 0 14px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.pastForm h4{margin:0;font-size:15px;font-weight:600}
+.pastForm .field{min-width:0;box-sizing:border-box}
+.pastForm select.field{color:var(--fg)}
