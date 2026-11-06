@@ -1,10 +1,10 @@
 // Offline support. App files: network first (so updates show on the next open), cache when offline.
 // Fonts: cache first, saved the first time they load.
 // Bump VERSION whenever you change any app file so phones refresh their saved copy.
-const VERSION = "sp-v24";
+const VERSION = "sp-v25";
 const PRACTICES = ["nidra", "kriya", "metta", "vipassana", "sohum", "trataka"]; // same list as content/practices.json
 const APP = ["./", "index.html", "styles.css", "app.js", "content/days.json", "content/daily.json", "content/practices.json",
-  ...PRACTICES.map(id => `content/practices/${id}.json`), "manifest.webmanifest",
+  ...PRACTICES.map(id => `content/practices/${id}.json`), "content/breathwork.json", "manifest.webmanifest",
   "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png"];
 const fresh = u => new Request(u, { cache: "reload" }); // skips the browser's HTTP cache, which can still hold the previous version
 

@@ -2,12 +2,12 @@
    Practices: the seven chakras (content/days.json, one pool per weekday) plus the practices listed in content/practices.json,
    each described entirely by its own file in content/practices/. Recorded voice from audio/clips.json. */
 const $=id=>document.getElementById(id);
-let DATA=null, DAYS=[], SETTLE=10, todayIdx=0, CLIPS=null, PR={}, ORDER=[], pday=null, QUOTES=[];
+let BW=[], bw=null, DATA=null, DAYS=[], SETTLE=10, todayIdx=0, CLIPS=null, PR={}, ORDER=[], pday=null, QUOTES=[];
 let cur=0, segs=[], segI=-1, segElapsed=0, running=false, inSession=false, done=false, last=0, timer=null, wake=null, ctx=null, lastPhase=-1, tickAcc=0;
 // mode: guided | silent. time: minutes chosen on Home per practice (0 = the practice's own length). defTime: the Settings default for every practice.
 // goal: days per week. settle: seconds after Begin (null = the content default). theme: auto (light 6 am to 6 pm, dark otherwise) | light | dark.
 // name: what the greeting calls you. welcomed: the first-open name screen has been seen.
-const prefs={voice:true,tones:true,mode:"guided",practice:"chakras",time:{},defTime:0,goal:5,settle:null,theme:"auto",name:"",welcomed:false};
+const prefs={voice:true,tones:true,mode:"guided",practice:"chakras",time:{},defTime:0,goal:5,settle:null,theme:"auto",name:"",welcomed:false,bwVoice:true,bwSaved:[]};
 try{const p=JSON.parse(localStorage.getItem("sp-prefs")||"{}");Object.assign(prefs,p);delete prefs.len;prefs.time=prefs.time||{}}catch(e){}
 const DAY_FROM=6,NIGHT_FROM=18; // Automatic: light from 6 am, dark from 6 pm
 function applyTheme(){const h=new Date().getHours(),t=prefs.theme==="auto"?(h>=DAY_FROM&&h<NIGHT_FROM?"light":"dark"):prefs.theme;
@@ -108,7 +108,7 @@ const minLabel=s=>{const m=s/60;if(m>=59.5){const h=Math.floor((m+.5)/60),r=Math
   return (Number.isInteger(m)?m:Math.floor(m)+(m%1>=.5?"½":""))+" min"};
 function dateKey(){const n=new Date();return n.getFullYear()+"-"+(n.getMonth()+1)+"-"+n.getDate()}
 /* ---------- history: every finished sit, for the calendar and streak ---------- */
-// sp-hist: {"2026-10-30": [["kriya", 15, 7], ["chakras", 12.5]]} — practice id, minutes (null for sits logged before minutes were kept) and the hour it ended (newer sits only).
+// sp-hist: {"2026-10-30": [["kriya", 15, 7], ["chakras", 12.5]]} — practice id, minutes (null for sits logged before minutes were kept), the hour it ended (newer sits only) and, for breathwork, which exercise.
 const keyOf=d=>d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();
 function histLoad(){try{const h=localStorage.getItem("sp-hist");if(h)return JSON.parse(h)}catch(e){return {}}
   // First run: rebuild from the older per-day counts and per-practice logs.
@@ -120,7 +120,7 @@ function histLoad(){try{const h=localStorage.getItem("sp-hist");if(h)return JSON
       const extra=(+localStorage.getItem(k)||0)-(h[m[1]]||[]).length;for(let i=0;i<extra;i++)(h[m[1]]=h[m[1]]||[]).push(["chakras",null])}
     localStorage.setItem("sp-hist",JSON.stringify(h))}catch(e){}
   return h}
-function histAdd(id,mins){const h=histLoad(),k=dateKey();(h[k]=h[k]||[]).push([id,mins,new Date().getHours()]);try{localStorage.setItem("sp-hist",JSON.stringify(h))}catch(e){}}
+function histAdd(id,mins,ex){const h=histLoad(),k=dateKey();(h[k]=h[k]||[]).push([id,mins,new Date().getHours(),...(ex?[ex]:[])]);try{localStorage.setItem("sp-hist",JSON.stringify(h))}catch(e){}}
 // A sit from an earlier day, in the same places a finished sit is recorded.
 function addPast(id,d,mins){const h=histLoad(),k=keyOf(d);(h[k]=h[k]||[]).push([id,mins,d.getHours()]);h[k].sort((a,b)=>(a[2]??-1)-(b[2]??-1));
   try{localStorage.setItem("sp-hist",JSON.stringify(h))}catch(e){}
@@ -131,8 +131,9 @@ function restoreSits(){try{if(localStorage.getItem("sp-restored-1"))return;
     const d=new Date(y,m,day,hr);if(!(histLoad()[keyOf(d)]||[]).some(e=>e[0]===id))addPast(id,d,mins)});
   localStorage.setItem("sp-restored-1","1")}catch(e){}}
 function streak(h=histLoad()){const d=new Date();if(!h[keyOf(d)])d.setDate(d.getDate()-1);let n=0;while(h[keyOf(d)]){n++;d.setDate(d.getDate()-1)}return n}
-const pColor=id=>id==="chakras"?"#c2413a":(PR[id]&&PR[id].c)||"#888";
-const pName=id=>id==="chakras"?"Seven chakras":(PR[id]&&PR[id].name)||id;
+const pColor=id=>id==="chakras"?"#c2413a":id==="breath"?BW_C.Relaxing:(PR[id]&&PR[id].c)||"#888";
+const pName=id=>id==="chakras"?"Seven chakras":id==="breath"?"Breathwork":(PR[id]&&PR[id].name)||id;
+const sitName=e=>{const x=e[3]&&BW.find(b=>b.id===e[3]);return x?x.name:pName(e[0])};
 function readCount(){return (histLoad()[dateKey()]||[]).length}
 // Days with a sit this week, Monday to today.
 function weekDays(h=histLoad()){const d=new Date(),back=(d.getDay()+6)%7;let n=0;for(let i=0;i<=back;i++){const x=new Date(d);x.setDate(d.getDate()-i);if(h[keyOf(x)])n++}return n}
@@ -176,7 +177,7 @@ function journey(h=histLoad()){const days=satDays(h),nums=days.map(dayNum),all=d
   return {sits:all.length,mins:all.reduce((a,e)=>a+(e[1]||0),0),best:runs(nums),cur:streak(h),
     months:runs(months),monthsNow:monthRun(),thisMonth:perMonth[mNow]||0,
     fullMonth:Object.keys(perMonth).some(m=>perMonth[m]===new Date(Math.floor(m/12),m%12+1,0).getDate()),
-    goalRun:runs(goalWeeks),tried:new Set(all.map(e=>e[0])).size,
+    goalRun:runs(goalWeeks),tried:new Set(all.map(e=>e[0]).filter(id=>id!=="breath")).size,
     early:all.some(e=>e[2]!=null&&e[2]<7),late:all.some(e=>e[2]!=null&&e[2]>=22),
     cycle:ORDER.some(id=>{const s=progLoad(PR[id]);return s.log&&progress(PR[id]).complete})}}
 // [id, group, mark, name, what it takes, value it's earned on, target, value shown as progress (defaults to the earned one)]
@@ -238,7 +239,7 @@ function renderCal(){
   $("goalWrap").hidden=!g;if(g){$("goalBar").style.width=Math.min(100,wk/g*100)+"%";
     $("goalNote").textContent=wk>=g?`Weekly goal met: ${wk} of ${g} days. Lovely.`:`This week: ${wk} of ${g} days. ${g-wk} to go.`}
   const sel=calSel&&h[calSel];
-  $("calDay").textContent=sel?`${new Date(calSel.replace(/-/g,"/")).toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"})}: ${sel.map(e=>pName(e[0])+(e[1]?` · ${minLabel(e[1]*60)}`:"")).join(", ")}`:
+  $("calDay").textContent=sel?`${new Date(calSel.replace(/-/g,"/")).toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"})}: ${sel.map(e=>sitName(e)+(e[1]?` · ${minLabel(e[1]*60)}`:"")).join(", ")}`:
     sits?"Tap a day to see what you practised.":"Days you sit will light up here.";
 }
 // "Share my week": a short summary to send to a friend, through the phone's own share sheet.
@@ -256,7 +257,7 @@ const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",
 /* ---------- screens ---------- */
 let catSel="All";
 function renderPractices(){
-  const all=[{id:"chakras",name:"Seven chakras",sub:"A pool for each weekday",c:"#c2413a",category:"Energy"},...ORDER.map(id=>PR[id])];
+  const all=[{id:"chakras",name:"Seven chakras",sub:"A pool for each weekday",c:"#c2413a",category:"Energy"},...ORDER.map(id=>PR[id]),{id:"breath",name:"Breathwork",c:BW_C.Relaxing,category:"Breath"}];
   const cats=["All",...new Set(all.map(p=>p.category).filter(Boolean))];
   $("cats").innerHTML=cats.map(c=>`<button data-cat="${c}" aria-pressed="${c===catSel}">${c}</button>`).join("");
   $("practices").innerHTML=all.filter(p=>catSel==="All"||p.category===catSel).map(p=>`<button class="prac" style="--c:${p.c}" data-id="${p.id}" aria-pressed="${prefs.practice===p.id}"><i aria-hidden="true"></i><span>${esc(p.name)}</span><small>${esc(p.category||"")}</small></button>`).join("");
@@ -314,9 +315,9 @@ function timeLeft(){if(!inSession)return done?0:total();if(segI<0)return total()
   let r=segs[segI].dur-segElapsed;for(let k=segI+1;k<segs.length;k++)r+=segs[k].dur;return r}
 function drawClock(){
   const l=timeLeft(),t=fmt(l);let now;
-  if(!inSession)now=done?(P()?P().doneText:"Complete. Carry the seal with you."):`Ready · ${segs.length} step${segs.length>1?"s":""}`;
+  if(!inSession)now=done?(bw?"Complete. Let your breath be natural.":P()?P().doneText:"Complete. Carry the seal with you."):`Ready · ${segs.length} step${segs.length>1?"s":""}`;
   else if(segI<0)now=`Settling · starts in ${fmt(SETTLE-segElapsed)}`;
-  else now=`${segs[segI].name} · ${fmt(segs[segI].dur-segElapsed)} left`;
+  else now=bw?"":`${segs[segI].name} · ${fmt(segs[segI].dur-segElapsed)} left`;
   if($("sitClock").textContent!==t)$("sitClock").textContent=t;
   if($("sitSub").textContent!==now)$("sitSub").textContent=now;
   $("sitRing").style.strokeDashoffset=RING*(1-l/total());
@@ -350,6 +351,8 @@ const GAP=1.8; // seconds of quiet between consecutive lines
 const buffers={}, voiceQ=[];
 let speaking=false, gapTimer=null, curSrc=null, rot={in:0,out:0};
 function clipId(key,d=DAYS[cur]){
+  if(bw){if(key==="in"||key==="out")return `common-${key}_${"abc"[rot[key]++%3]}`;
+    return /_(left|right)$/.test(key)?"tue-"+key:key==="pump"?"wed-pump":"common-"+key} // breathwork reuses the cues already recorded
   const p=P();
   if(p){const day=pday!=null&&p.days[pday].say;
     if(day&&day[key]!=null)return `${p.id}-d${pday+1}-${key}`;return p.say[key]!=null?`${p.id}-${key}`:"common-"+key}
@@ -360,6 +363,7 @@ function clipText(id){const [pfx,...rest]=id.split("-"),key=rest.join("-");
   const p=PR[pfx];if(p){const m=key.match(/^d(\d+)-(.+)$/);return m?p.days[m[1]-1].say[m[2]]:p.say[key]}
   const d=DAYS.find(x=>x.short.toLowerCase()===pfx);return d&&d.say[key]}
 function sessionClipIds(){const common=Object.keys(DATA.common).map(k=>"common-"+k),p=P();
+  if(bw)return [...common,"tue-in_left","tue-out_right","tue-in_right","tue-out_left","wed-pump"];
   if(!p){const d=DAYS[cur];return [...common,...Object.keys(d.say).map(k=>`${d.short.toLowerCase()}-${k}`)]}
   return [...common,...Object.keys(p.say).map(k=>`${p.id}-${k}`),...(pday!=null?Object.keys(p.days[pday].say||{}).map(k=>`${p.id}-d${pday+1}-${k}`):[])]}
 function loadClips(ids){if(!CLIPS)return;const c=ac();if(!c)return;
@@ -427,13 +431,13 @@ function keepAwake(){try{navigator.wakeLock&&navigator.wakeLock.request("screen"
 function phaseIdx(seg,t){const len=seg.pattern.reduce((a,p)=>a+p[1],0);let x=t%len,k=0,cyc=Math.floor(t/len);
   for(;k<seg.pattern.length;k++){if(x<seg.pattern[k][1])break;x-=seg.pattern[k][1]}return cyc*100+k}
 function enterSeg(i){segI=i;segElapsed=0;lastPhase=-1;tickAcc=0;rot={in:0,out:0};
-  const s=segs[i];s.fired=0;s.paceFrom=null;
+  const s=segs[i];s.fired=0;s.paceFrom=s.paceNow?0:null;
   if(s.bell)bell(1);$("sitStep").textContent=segs.length>1?`Step ${i+1} of ${segs.length}`:s.name}
 function begin(){
   wakeAudio();loadClips(sessionClipIds());stopVoice();heldLines=[];
   $("sit").hidden=false;$("sitLive").hidden=false;$("paused").hidden=true;$("sitStep").textContent="Settling";
   segI=-1;segElapsed=0;inSession=true;done=false;run();keepAwake();drawClock();
-  if(guided())setTimeout(()=>{if(running&&segI<0)speak(["common-settle"])},600);
+  if(bw?prefs.bwVoice:guided())setTimeout(()=>{if(running&&segI<0)speak(["common-settle"])},600);
 }
 function run(){running=true;last=performance.now();clearInterval(timer);timer=setInterval(()=>{tick();drawClock()},100)}
 function tick(){
@@ -449,19 +453,20 @@ function tick(){
     if(seg.paceFrom==null&&segElapsed>25)seg.paceFrom=segElapsed; // in case the introduction never reports finishing
     if(seg.paceFrom!=null&&segElapsed>=seg.paceFrom){
       const pi=phaseIdx(seg,segElapsed-seg.paceFrom),p=seg.pattern[pi%100];
-      if(pi!==lastPhase){lastPhase=pi;tone(p[0],p[1]);if(!speaking&&segElapsed<seg.guideUntil)playClip(clipId(p[2]))}
+      if(pi!==lastPhase){lastPhase=pi;tone(p[0],p[1]);if(!speaking&&segElapsed<seg.guideUntil&&p[1]>=3)playClip(clipId(p[2]));if(bw)bwPhase(p,seg)}
+      if(bw)bwCount(p,seg);
       if(p[0]==="pump"){tickAcc+=dt;if(tickAcc>=.9){tickAcc=0;tone("tick")}}
     }
   }
 }
-function finish(){stop();stopVoice();inSession=false;bell(3);if(guided())setTimeout(()=>playClip(clipId("complete")),4200);
+function finish(){stop();stopVoice();inSession=false;bell(3);$("bwCue").hidden=true;if(!bw&&guided())setTimeout(()=>playClip(clipId("complete")),4200);
   const k0=karmaOf().total,b0=new Set(earned());
-  histAdd(prefs.practice,Math.round(total()/30)/2);
-  const p=P();if(p){logSit(p);render()}done=true;drawClock();showCount();
+  histAdd(bw?"breath":prefs.practice,Math.round(total()/30)/2,bw&&bw.id);
+  const p=bw?null:P();if(p){logSit(p);render()}done=true;drawClock();showCount();
   const fresh=BADGES.filter(b=>!b0.has(b.id)&&earned().includes(b.id)),gain=karmaOf().total-k0;
   $("sitReward").innerHTML=(gain>0?`<b>+${fmtK(gain)} karma</b>`:"")+fresh.map(b=>`<span>New badge · ${esc(b.name)}</span>`).join("");
   $("sitReward").hidden=!$("sitReward").innerHTML;
-  setTimeout(()=>{$("sit").hidden=true;$("sitReward").hidden=true;if(fresh.length)toast(`New badge: ${fresh.map(b=>b.name).join(", ")}`)},fresh.length?10000:7500)}
+  setTimeout(()=>{$("sit").hidden=true;$("sitReward").hidden=true;bwEnd();if(fresh.length)toast(`New badge: ${fresh.map(b=>b.name).join(", ")}`)},fresh.length?10000:7500)}
 function toast(t){const el=$("toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,4500)}
 function stop(){running=false;clearInterval(timer);timer=null;try{wake&&wake.release()}catch(e){}wake=null}
 function pause(why){if(!running)return;stop();holdVoice();$("sitLive").hidden=true;$("paused").hidden=false;
@@ -471,13 +476,13 @@ $("begin").onclick=begin;
 $("sit").onclick=e=>{if(e.target.closest("#paused"))return;pause()};
 $("resume").onclick=()=>{wakeAudio();$("paused").hidden=true;$("sitLive").hidden=false;run();keepAwake();
   const held=heldLines;heldLines=[];if(held.length)setTimeout(()=>{if(running)speak(held)},800)};
-$("end").onclick=()=>{stop();stopVoice();heldLines=[];inSession=false;drawClock();$("sit").hidden=true};
+$("end").onclick=()=>{stop();stopVoice();heldLines=[];inSession=false;drawClock();$("sit").hidden=true;bwEnd()};
 $("tVoice").onclick=()=>{prefs.voice=!prefs.voice;savePrefs();syncToggles()};
 $("tTones").onclick=()=>{prefs.tones=!prefs.tones;savePrefs();syncToggles()};
 $("test").onclick=()=>{ac();loadClips(["common-test"]);bell(1);setTimeout(()=>tone("in",3),600);setTimeout(()=>tone("out",3),3700);
   setTimeout(()=>{stopVoice();speak(["common-test"])},900)};
 $("days").onclick=e=>{const b=e.target.closest(".day");if(b)selectDay(+b.dataset.i)};
-$("practices").onclick=e=>{const b=e.target.closest(".prac");if(!b)return;prefs.practice=b.dataset.id;savePrefs();
+$("practices").onclick=e=>{const b=e.target.closest(".prac");if(!b)return;if(b.dataset.id==="breath"){go("breath");return}prefs.practice=b.dataset.id;savePrefs();
   if(prefs.practice==="chakras")cur=todayIdx;render();$("pHome").querySelector(".hero").scrollIntoView({behavior:"smooth",block:"center"})};
 $("cats").onclick=e=>{const b=e.target.closest("[data-cat]");if(b){catSel=b.dataset.cat;renderPractices()}};
 $("cycleChips").onclick=e=>{const p=P(),b=e.target.closest("[data-cycle]");if(!p||!b)return;const s=progLoad(p);s.cycle=b.dataset.cycle;progSave(p,s);render()};
@@ -485,11 +490,130 @@ $("restart").onclick=()=>{const p=P();if(!p||!confirm(`Start ${p.name} over from
   const s=progLoad(p);s.log={};progSave(p,s);render()};
 $("timeSel").onchange=e=>{prefs.time[prefs.practice]=+e.target.value;savePrefs();render()};
 $("karmaBtn").onclick=()=>{go("calendar");$("karma").scrollIntoView({block:"start"})};
+/* ---------- breathwork: one breathing exercise as the whole sit ---------- */
+const BW_C={Relaxing:"#4f7fb5",Balancing:"#2f8f83",Energizing:"#d0782a",Deepening:"#7b6fc0"};
+const BW_GOALS=[["all","All",""],
+  ["calm","Stressed",'<path d="M3 9c3-3 6-3 9 0s6 3 9 0M3 15c3-3 6-3 9 0s6 3 9 0"/>'],
+  ["energy","Tired",'<path d="M13 3L5 14h6l-1 7 8-11h-6z"/>'],
+  ["focus","Scattered",'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/>'],
+  ["sleep","Can't sleep",'<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5z"/>'],
+  ["balance","Off balance",'<path d="M12 4v16M7 20h10M5 7h14M5 7l-2.5 6a3 3 0 0 0 5 0zM19 7l-2.500 6a3 3 0 0 0 5 0z"/>'],
+  ["cool","Too hot",'<path d="M12 3v18M4.200 7.500l15.600 9M19.800 7.500l-15.600 9"/>']];
+const bwHolds=x=>x.pattern.some(p=>p[0]==="hold"||p[0]==="holdout");
+const bwTried=()=>new Set(Object.values(histLoad()).flat().map(e=>e[3]).filter(Boolean));
+// Inside a group any choice can match; across groups all must. Goal and search sit on the page; the rest are in the Filters sheet.
+const BW_FILTERS=[
+  {key:"level",page:true,label:"Your level",opts:[["Beginner","Beginner"],["Intermediate","Intermediate"],["Advanced","Advanced"]],test:(x,v)=>x.level===v},
+  {key:"effect",label:"Effect",opts:[["Relaxing","Relaxing"],["Balancing","Balancing"],["Energizing","Energizing"],["Deepening","Deepening"]],test:(x,v)=>x.group===v},
+  {key:"time",label:"Time you have",opts:[["quick","A few minutes"],["long","20 minutes or more"]],test:(x,v)=>v==="quick"?(x.def||10)<=5:(x.max||30)>=20},
+  {key:"where",label:"Where you are",opts:[["desk","At a desk"],["bed","In bed"]],test:(x,v)=>(x.where||[]).includes(v)},
+  {key:"holds",label:"Breath holds",opts:[["with","With holds"],["without","No holds"]],test:(x,v)=>bwHolds(x)===(v==="with")},
+  {key:"tech",label:"Technique",opts:[["nostril","Nostril work"],["sound","Humming and sound"],["fast","Fast breathing"],["mouth","Through the mouth"]],test:(x,v)=>(x.tech||[]).includes(v)},
+  {key:"mine",label:"Your list",opts:[["saved","Saved",'<path d="M7 4h10a1 1 0 0 1 1 1v15l-6-4-6 4V5a1 1 0 0 1 1-1z"/>'],["new","New to me",'<path d="M12 3l1.800 6.200L20 11l-6.200 1.800L12 19l-1.800-6.200L4 11l6.200-1.800z"/>'],["tried","Done before",'<path d="M5 12.500l4.500 4.500L19 7.500"/>']],test:(x,v,tried)=>v==="saved"?prefs.bwSaved.includes(x.id):v==="tried"?tried.has(x.id):!tried.has(x.id)}];
+const BW_WORD={in:"Breathe in",out:"Breathe out",hold:"Hold",holdout:"Hold empty",pump:"Pump",free:"Breathe freely"};
+const BW_SHORT={in:"In",out:"Out",hold:"Hold",holdout:"Hold",pump:"Pump",free:"Rest"};
+const isSide=l=>l==="left"||l==="right";
+const bwPattern=ex=>ex.pattern.map(([t,d,l])=>[t,d,isSide(l)?`${t}_${l}`:t,isSide(l)?`${BW_WORD[t]} · ${l}`:l||BW_WORD[t]]);
+const bwRhythm=ex=>ex.pattern.length===1?"Your own pace":ex.pattern.map(([t,d,l])=>`${isSide(l)?`${BW_SHORT[t]} ${l}`:BW_SHORT[t]} ${d}`).join(" · ");
+let bwGoal="all", bwQ="", bwOpen=null, bwMins=10;
+const bwSel=Object.fromEntries(BW_FILTERS.map(f=>[f.key,[]]));
+const BW_SHEET=BW_FILTERS.filter(f=>!f.page); // level sits on the page, next to goals
+const bwSelCount=()=>BW_SHEET.flatMap(f=>bwSel[f.key]).length;
+const bwDigits=x=>x.pattern.length===1?"Free":x.pattern.some(p=>p[0]==="pump")?"Fast":x.pattern.length>4?"":x.pattern.map(p=>p[1]).join("·");
+function bwMatch(tried){const q=bwQ.trim().toLowerCase();
+  return BW.filter(x=>(bwGoal==="all"||x.tags.includes(bwGoal))&&
+    (!q||[x.name,x.skt,x.line,x.best,...x.benefits].join(" ").toLowerCase().includes(q))&&
+    BW_FILTERS.every(f=>!bwSel[f.key].length||bwSel[f.key].some(v=>f.test(x,v,tried))))}
+// The shape of one round of breath: up on the in-breath, flat on a hold, down on the out-breath. Width is time.
+function bwCurve(ex,w,h,pad=4){const T=ex.pattern.reduce((a,p)=>a+p[1],0),X=t=>+(pad+t/T*(w-2*pad)).toFixed(1),Y=l=>+(h-pad-l*(h-2*pad)).toFixed(1),pts=[[0,0]];
+  let t=0,lv=0,step=1;
+  ex.pattern.forEach(([ty,d],i)=>{
+    if(ty==="in"){if(lv===0){step=1;for(let n=0,j=i;j<ex.pattern.length&&ex.pattern[j][0]!=="out";j++)if(ex.pattern[j][0]==="in"){n++;step=1/n}}
+      lv=Math.min(1,lv+step);pts.push([t+d,lv])}
+    else if(ty==="out"){lv=0;pts.push([t+d,0])}
+    else if(ty==="pump"){const n=8;for(let k=1;k<=n;k++)pts.push([t+d*k/n,k===n?0:k%2?.8:.25])}
+    else if(ty==="free"){const n=ex.pattern.length===1?8:4;for(let k=1;k<=n;k++)pts.push([t+d*k/n,k===n?lv:lv+(k%2?.35:.08)])}
+    else pts.push([t+d,lv]);
+    t+=d});
+  return {T,pts:pts.map(([a,b])=>[a,X(a),Y(b)])}}
+function bwShape(ex,w,h,move){const {T,pts}=bwCurve(ex,w,h),d="M"+pts.map(p=>p[1]+" "+p[2]).join("L");let dot="";
+  if(move&&!matchMedia("(prefers-reduced-motion: reduce)").matches){
+    let len=0;const ls=pts.map((p,i)=>i?(len+=Math.hypot(p[1]-pts[i-1][1],p[2]-pts[i-1][2])):0);
+    dot=`<circle r="5" class="bwDot"><animateMotion dur="${T}s" repeatCount="indefinite" calcMode="linear" path="${d}" keyTimes="${pts.map(p=>(p[0]/T).toFixed(4)).join(";")}" keyPoints="${ls.map(l=>(l/len).toFixed(4)).join(";")}"/></circle>`}
+  return `<svg class="bwShape" viewBox="0 0 ${w} ${h}" aria-hidden="true"><path class="area" d="${d}L${pts[pts.length-1][1]} ${h}L${pts[0][1]} ${h}Z"/><path class="line" d="${d}"/>${dot}</svg>`}
+const bwBook='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10a1 1 0 0 1 1 1v15l-6-4-6 4V5a1 1 0 0 1 1-1z"/></svg>';
+// A suggestion that fits the hour and changes each day.
+// Only beginner exercises get suggested; the stronger ones are there to be chosen.
+function bwSuggest(){const hr=new Date().getHours(),[tag,why]=hr<5?["sleep","For the small hours"]:hr<11?["focus","To start your morning"]:hr<15?["focus","For the middle of the day"]:hr<19?["balance","For this afternoon"]:hr<22?["calm","To wind down this evening"]:["sleep","Before you sleep"];
+  const pool=BW.filter(x=>x.tags.includes(tag)&&x.level==="Beginner");return {ex:pool[dayNum(dateKey())%pool.length],why}}
+function renderBreath(){if(!BW.length)return;
+  const {ex,why}=bwSuggest(),pick=$("bwPick"),m=Math.min(ex.def||10,ex.max||30);pick.style.setProperty("--c",BW_C[ex.group]);pick.dataset.bw=ex.id;pick.dataset.mins=m;
+  $("bwPickWhy").textContent=why;$("bwPickName").textContent=ex.name;$("bwPickLine").textContent=ex.line;
+  $("bwPickShape").innerHTML=bwShape(ex,320,52,true);$("bwPickRhythm").textContent=bwRhythm(ex);$("bwPickGo").textContent=`Begin · ${m} min`;
+  $("bwGoals").innerHTML=BW_GOALS.map(([id,t,ic])=>`<button data-goal="${id}" aria-pressed="${id===bwGoal}">${ic?`<svg viewBox="0 0 24 24" aria-hidden="true">${ic}</svg>`:""}${t}</button>`).join("");
+  $("bwLevels").innerHTML=BW_FILTERS[0].opts.map(([v,t])=>`<button data-v="${v}" aria-pressed="${bwSel.level.includes(v)}">${t}</button>`).join("");
+  bwResults()}
+function bwResults(){const tried=bwTried(),list=bwMatch(tried),n=bwSelCount();
+  $("bwCount").textContent=`${list.length} exercise${list.length===1?"":"s"}`;
+  $("bwFilterBtn").setAttribute("aria-pressed",n>0);$("bwFilterN").textContent=n||"";$("bwFilterN").hidden=!n;
+  $("bwClear").hidden=!(n||bwQ||bwGoal!=="all"||bwSel.level.length);
+  $("bwActive").hidden=!n;
+  $("bwActive").innerHTML=BW_SHEET.flatMap(f=>bwSel[f.key].map(v=>`<button data-key="${f.key}" data-v="${v}" aria-label="Remove ${f.opts.find(o=>o[0]===v)[1]}">${f.opts.find(o=>o[0]===v)[1]}<i aria-hidden="true">×</i></button>`)).join("");
+  const LEVELS_ORDER=["Beginner","Intermediate","Advanced"];
+  $("bwList").innerHTML=list.length?Object.keys(BW_C).map(g=>{const rows=list.filter(x=>x.group===g).sort((a,b)=>LEVELS_ORDER.indexOf(a.level)-LEVELS_ORDER.indexOf(b.level));
+    return rows.length?`<h2 class="bwHead"><i style="--c:${BW_C[g]}"></i>${g}<small>${rows.length}</small></h2>`+rows.map(x=>`<article class="bwRow" style="--c:${BW_C[x.group]}"><button class="bwMain" data-bw="${x.id}"><span class="bwTile">${bwShape(x,64,bwDigits(x)?30:44)}<small>${bwDigits(x)}</small></span><span class="bwTxt"><b>${esc(x.name)}</b><small>${esc(x.line)}</small><em><span class="bwLvl" data-l="${LEVELS_ORDER.indexOf(x.level)}" aria-hidden="true"><i></i><i></i><i></i></span>${x.level}${tried.has(x.id)?" · Done before":""}</em></span></button><button class="bwSave" data-save="${x.id}" aria-pressed="${prefs.bwSaved.includes(x.id)}" aria-label="Save ${esc(x.name)}">${bwBook}</button></article>`).join(""):""}).join(""):
+    `<div class="bwEmpty"><b>Nothing fits all of that</b><p class="note">Try removing a filter.</p></div>`}
+function bwClearAll(){bwGoal="all";bwQ="";$("bwSearch").value="";BW_FILTERS.forEach(f=>bwSel[f.key]=[]);renderBreath()}
+function bwToggleSave(id){const s=prefs.bwSaved,i=s.indexOf(id);if(i<0)s.push(id);else s.splice(i,1);savePrefs();bwResults();
+  if(bwOpen&&bwOpen.id===id)$("bwSave").setAttribute("aria-pressed",i<0)}
+function bwFiltersDraw(){const tried=bwTried();
+  $("bwFilterGroups").innerHTML=BW_SHEET.map(f=>`<div class="opt"><span class="label">${f.label}</span><div class="bwChips">${f.opts.map(([v,t,ic])=>`<button data-key="${f.key}" data-v="${v}" aria-pressed="${bwSel[f.key].includes(v)}">${ic?`<svg viewBox="0 0 24 24" aria-hidden="true">${ic}</svg>`:""}${t}</button>`).join("")}</div></div>`).join("");
+  const n=bwMatch(tried).length;$("bwFilterShow").textContent=`Show ${n} exercise${n===1?"":"s"}`;$("bwFilterReset").disabled=!bwSelCount()}
+function bwShow(id){const x=BW.find(b=>b.id===id);if(!x)return;bwOpen=x;bwMins=Math.min(x.def||10,x.max||30);
+  const sheet=$("bwSheet");sheet.style.setProperty("--c",BW_C[x.group]);
+  $("bwName").textContent=x.name;$("bwSkt").textContent=[x.skt,x.group,x.level].join(" · ");$("bwRhythm").textContent=bwRhythm(x);$("bwSheetShape").innerHTML=bwShape(x,320,72,true);
+  $("bwSave").setAttribute("aria-pressed",prefs.bwSaved.includes(x.id));
+  $("bwHow").innerHTML=x.how.map(t=>`<li>${esc(t)}</li>`).join("");$("bwBenefits").innerHTML=x.benefits.map(t=>`<li>${esc(t)}</li>`).join("");
+  $("bwBest").textContent=x.best;$("bwCareWrap").hidden=!x.care;$("bwCare").textContent=x.care||"";
+  bwControls();sheet.showModal();sheet.querySelector(".sheet").scrollTop=0}
+function bwControls(){const x=bwOpen;
+  $("bwTimes").innerHTML=[3,5,10,15,20,30].filter(m=>m<=(x.max||30)).map(m=>`<button data-mins="${m}" aria-pressed="${m===bwMins}">${m}</button>`).join("");
+  $("bwBegin").textContent=`Begin · ${bwMins} min`;
+  $("bwVoiceOn").setAttribute("aria-pressed",prefs.bwVoice);$("bwVoiceOff").setAttribute("aria-pressed",!prefs.bwVoice)}
+function bwStart(){bw=bwOpen;if($("bwSheet").open)$("bwSheet").close();document.documentElement.style.setProperty("--chakra",BW_C[bw.group]);
+  segs=[{key:"breath",name:bw.name,dur:bwMins*60,lines:[],pattern:bwPattern(bw),paceNow:true,guideUntil:prefs.bwVoice?60:0}];
+  $("sit").classList.add("bw");$("bwCue").hidden=true;begin()}
+// The word, the count and the glow on the eyes-closed screen.
+let bwAt=0;
+function bwPhase(p,seg){bwAt=segElapsed;$("bwCue").hidden=false;$("bwWord").textContent=p[3];
+  const g=document.querySelector(".sitDial .glow"),scale={in:1.3,out:.72}[p[0]];g.style.transitionDuration=p[1]+"s";
+  if(scale)g.style.transform=`scale(${scale})`;else if(p[0]==="pump"||p[0]==="free")g.style.transform="scale(1)"}
+function bwCount(p,seg){const n=seg.pattern.length>1?Math.max(1,Math.ceil(p[1]-(segElapsed-bwAt))):"";if($("bwNum").textContent!==String(n))$("bwNum").textContent=n}
+function bwEnd(){if(!bw)return;bw=null;$("sit").classList.remove("bw");$("bwCue").hidden=true;const g=document.querySelector(".sitDial .glow");g.style.transform="";g.style.transitionDuration="";render()}
+$("bwGoals").onclick=e=>{const b=e.target.closest("[data-goal]");if(!b)return;bwGoal=b.dataset.goal===bwGoal?"all":b.dataset.goal;
+  document.querySelectorAll("#bwGoals button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.goal===bwGoal));bwResults()};
+$("bwSearch").oninput=e=>{bwQ=e.target.value;bwResults()};
+$("bwClear").onclick=bwClearAll;
+$("bwActive").onclick=e=>{const b=e.target.closest("[data-key]");if(!b)return;bwSel[b.dataset.key]=bwSel[b.dataset.key].filter(v=>v!==b.dataset.v);bwResults()};
+$("bwList").onclick=e=>{const s=e.target.closest("[data-save]");if(s){bwToggleSave(s.dataset.save);return}const b=e.target.closest("[data-bw]");if(b)bwShow(b.dataset.bw)};
+$("bwPickMore").onclick=()=>bwShow($("bwPick").dataset.bw);
+$("bwPickGo").onclick=()=>{bwOpen=BW.find(x=>x.id===$("bwPick").dataset.bw);bwMins=+$("bwPick").dataset.mins;bwStart()};
+$("bwSave").onclick=()=>bwToggleSave(bwOpen.id);
+$("bwFilterBtn").onclick=()=>{bwFiltersDraw();$("bwFilters").showModal()};
+$("bwFilterClose").onclick=$("bwFilterShow").onclick=()=>{$("bwFilters").close();bwResults()};
+$("bwFilterReset").onclick=()=>{BW_SHEET.forEach(f=>bwSel[f.key]=[]);bwFiltersDraw()};
+$("bwLevels").onclick=e=>{const b=e.target.closest("[data-v]");if(!b)return;const v=b.dataset.v,l=bwSel.level,i=l.indexOf(v);if(i<0)l.push(v);else l.splice(i,1);b.setAttribute("aria-pressed",i<0);bwResults()};
+$("bwFilterGroups").onclick=e=>{const b=e.target.closest("[data-key]");if(!b)return;const k=b.dataset.key,v=b.dataset.v,i=bwSel[k].indexOf(v);if(i<0)bwSel[k].push(v);else bwSel[k].splice(i,1);bwFiltersDraw()};
+$("bwClose").onclick=()=>$("bwSheet").close();
+$("bwTimes").onclick=e=>{const b=e.target.closest("[data-mins]");if(b){bwMins=+b.dataset.mins;bwControls()}};
+$("bwVoiceOn").onclick=()=>{prefs.bwVoice=true;savePrefs();bwControls()};
+$("bwVoiceOff").onclick=()=>{prefs.bwVoice=false;savePrefs();bwControls()};
+$("bwBegin").onclick=bwStart;
 /* ---------- menu drawer ---------- */
 function renderRecent(){const h=histLoad(),out=[];
   for(const k of Object.keys(h).sort((a,b)=>dayNum(b)-dayNum(a))){for(const e of [...h[k]].reverse()){if(out.length<5)out.push([k,e])}if(out.length>=5)break}
   const day=k=>{const n=dayNum(dateKey())-dayNum(k);return n===0?"Today":n===1?"Yesterday":n<7?new Date(k.replace(/-/g,"/")).toLocaleDateString(undefined,{weekday:"long"}):new Date(k.replace(/-/g,"/")).toLocaleDateString(undefined,{day:"numeric",month:"short"})};
-  $("recent").innerHTML=out.length?out.map(([k,e])=>`<div class="rec"><i style="--c:${pColor(e[0])}"></i><span><b>${esc(pName(e[0]))}</b><small>${day(k)}${e[1]?` · ${minLabel(e[1]*60)}`:""}</small></span></div>`).join(""):`<p class="note">Your sits will show here.</p>`}
+  $("recent").innerHTML=out.length?out.map(([k,e])=>`<div class="rec"><i style="--c:${pColor(e[0])}"></i><span><b>${esc(sitName(e))}</b><small>${day(k)}${e[1]?` · ${minLabel(e[1]*60)}`:""}</small></span></div>`).join(""):`<p class="note">Your sits will show here.</p>`}
 function drawer(open){$("drawer").hidden=$("scrim").hidden=!open;$("menuBtn").setAttribute("aria-expanded",open);document.body.classList.toggle("drawerOpen",open);
   if(open){renderRecent();renderMe();document.querySelectorAll("#dNav button").forEach(b=>b.toggleAttribute("aria-current",!b.dataset.to&&b.dataset.go===document.body.dataset.page))}}
 $("menuBtn").onclick=$("avatar").onclick=()=>drawer(true);
@@ -505,12 +629,13 @@ $("shareWeek").onclick=async()=>{const text=weekSummary();
   try{if(navigator.share){await navigator.share({text});return}}catch(e){if(e.name==="AbortError")return}
   try{await navigator.clipboard.writeText(text);$("shareWeek").textContent="Copied. Paste it to a friend";setTimeout(()=>$("shareWeek").textContent="Share my week",2500)}catch(e){}};
 /* ---------- pages: Home, Today, Calendar, Settings ---------- */
-const PAGES={home:"pHome",today:"pToday",calendar:"pCal",settings:"pSettings"};
+const PAGES={home:"pHome",breath:"pBreath",today:"pToday",calendar:"pCal",settings:"pSettings"};
 function go(name){if(!PAGES[name])name="home";
   for(const [k,id] of Object.entries(PAGES))$(id).hidden=k!==name;
   document.querySelectorAll(".tabs button").forEach(b=>b.dataset.go===name?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
   document.body.dataset.page=name;
   if(name==="today")renderQuote();
+  if(name==="breath")renderBreath();
   if(name==="calendar"){calMonth=new Date();calMonth.setDate(1);calSel=null;renderCal();renderKarma()}
   if(name==="settings")renderSettings();
   if(name==="home")render();
@@ -550,7 +675,7 @@ function renderSettings(){
   document.querySelectorAll("#setTheme button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.theme===prefs.theme));
   $("setThemeNote").textContent=prefs.theme==="auto"?"Light from 6 am, dark from 6 pm.":prefs.theme==="dark"?"Dark all day.":"Light all day.";
   if(document.activeElement!==$("setName"))$("setName").value=prefs.name||"";
-  const ps=$("pastPractice"),keep=ps.value||prefs.practice;ps.innerHTML=["chakras",...ORDER].map(id=>`<option value="${id}">${esc(pName(id))}</option>`).join("");ps.value=keep;
+  const ps=$("pastPractice"),keep=ps.value||prefs.practice;ps.innerHTML=["chakras",...ORDER,"breath"].map(id=>`<option value="${id}">${esc(pName(id))}</option>`).join("");ps.value=keep;
 }
 $("setTime").onclick=e=>{const b=e.target.closest("[data-time]");if(!b)return;prefs.defTime=+b.dataset.time;prefs.time={};savePrefs();renderSettings()}; // a new default applies everywhere
 $("sGuided").onclick=()=>{prefs.mode="guided";savePrefs();renderSettings()};
@@ -575,8 +700,10 @@ Promise.all([
   getJSON("content/days.json"),
   getJSON("content/daily.json").catch(()=>[]),
   getJSON("content/practices.json").then(ids=>Promise.all(ids.map(id=>getJSON(`content/practices/${id}.json`).then(p=>({...p,id}))))).catch(()=>[]),
-  fetch("audio/clips.json").then(r=>r.ok?r.json():null).catch(()=>null)
-]).then(([data,daily,practices,clips])=>{
+  fetch("audio/clips.json").then(r=>r.ok?r.json():null).catch(()=>null),
+  getJSON("content/breathwork.json").catch(()=>[])
+]).then(([data,daily,practices,clips,breaths])=>{
+  BW=breaths;
   DATA=data;DAYS=data.days;SETTLE=prefs.settle||data.settleSeconds||10;QUOTES=daily;CLIPS=clips&&clips.clips?clips:null;
   practices.forEach(p=>PR[p.id]=p);ORDER=practices.map(p=>p.id);
   if(prefs.practice!=="chakras"&&!PR[prefs.practice])prefs.practice="chakras";

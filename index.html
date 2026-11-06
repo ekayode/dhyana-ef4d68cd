@@ -109,6 +109,55 @@
   <div class="pair"><button class="begin" id="qSit">Sit with this</button><button class="share" id="qShare">Share</button></div>
 </main>
 
+<!-- Breathwork: one breathing exercise as the whole sit -->
+<main class="wrap page" id="pBreath" hidden>
+  <header class="top"><div><p class="hello">Just the breath</p><h1>Breathwork</h1></div></header>
+  <section class="bwPick" id="bwPick" aria-labelledby="bwPickName">
+    <small id="bwPickWhy"></small>
+    <h2 id="bwPickName"></h2>
+    <p id="bwPickLine"></p>
+    <div class="bwPickShape" id="bwPickShape"></div>
+    <p class="bwPickRhythm" id="bwPickRhythm"></p>
+    <div class="bwPickBtns"><button id="bwPickGo">Begin</button><button id="bwPickMore">Details</button></div>
+  </section>
+
+  <div class="opt"><span class="label">How are you today?</span><div class="cats bwGoals" id="bwGoals" role="group" aria-label="Filter by how you feel"></div></div>
+
+  <div class="opt"><span class="label">Your level</span><div class="bwChips bwLevels" id="bwLevels" role="group" aria-label="Filter by level"></div></div>
+
+  <div class="bwTools">
+    <label class="bwSearch"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.500"/><path d="M16 16l4.500 4.500"/></svg><span class="vh">Search breathing exercises</span><input id="bwSearch" type="search" placeholder="Search by name or benefit" autocomplete="off"></label>
+    <button class="bwFilterBtn" id="bwFilterBtn" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Filters<b id="bwFilterN" hidden></b></button>
+  </div>
+  <div class="bwActive" id="bwActive" hidden></div>
+  <div class="bwSum"><span class="label" id="bwCount"></span><button class="link" id="bwClear" hidden>Clear all</button></div>
+  <div class="bwList" id="bwList"></div>
+  <p class="note">If you're pregnant or have a heart, lung or blood pressure condition, check with your doctor first. Stop any exercise if you feel dizzy or unwell.</p>
+</main>
+
+<dialog id="bwFilters" aria-labelledby="bwFiltersTitle">
+  <div class="sheet">
+    <div class="sheetHead"><h3 id="bwFiltersTitle">Filters</h3><button class="iconbtn" id="bwFilterClose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="bwFilterGroups" id="bwFilterGroups"></div>
+    <div class="bwFilterFoot"><button class="link" id="bwFilterReset">Reset</button><button class="begin" id="bwFilterShow">Show</button></div>
+  </div>
+</dialog>
+
+<dialog id="bwSheet" aria-labelledby="bwName">
+  <div class="sheet">
+    <div class="sheetHead"><h3 id="bwName"></h3><div class="bwHeadBtns"><button class="iconbtn bwSave" id="bwSave" aria-pressed="false" aria-label="Save this exercise"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10a1 1 0 0 1 1 1v15l-6-4-6 4V5a1 1 0 0 1 1-1z"/></svg></button><button class="iconbtn" id="bwClose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div></div>
+    <p class="note" id="bwSkt"></p>
+    <div class="bwSheetViz"><div id="bwSheetShape"></div><p class="bwRhythm" id="bwRhythm"></p></div>
+    <div class="opt"><span class="label">Minutes</span><div class="seg" id="bwTimes"></div></div>
+    <div class="opt"><span class="label">Guidance</span><div class="seg"><button id="bwVoiceOn">Voice for 1 min, then tones</button><button id="bwVoiceOff">Tones only</button></div></div>
+    <div class="bwBlock"><span class="label">How to do it</span><ol id="bwHow"></ol></div>
+    <div class="bwBlock"><span class="label">Benefits</span><ul id="bwBenefits"></ul></div>
+    <div class="bwBlock"><span class="label">Best for</span><p id="bwBest"></p></div>
+    <div class="bwBlock bwCare" id="bwCareWrap"><span class="label">Take care</span><p id="bwCare"></p></div>
+    <button class="begin" id="bwBegin">Begin</button>
+  </div>
+</dialog>
+
 <!-- Calendar: what you've practised -->
 <main class="wrap page" id="pCal" hidden>
   <header class="top"><div><p class="hello">Your practice</p><h1>Calendar</h1></div></header>
@@ -204,6 +253,7 @@
 
 <nav class="tabs" aria-label="Sections">
   <button data-go="home" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-6.5 8 6.5V19a1.5 1.5 0 0 1-1.5 1.5H15v-5.5h-6v5.5H5.5A1.5 1.5 0 0 1 4 19z"/></svg><span>Home</span></button>
+  <button data-go="breath"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h11a2.5 2.5 0 1 0-2.5-2.5M3 14h15a2.5 2.5 0 1 1-2.5 2.5M3 19h7"/></svg><span>Breathe</span></button>
   <button data-go="today"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.6"/><path d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M5.6 18.4l1.6-1.6M16.8 7.2l1.6-1.6"/></svg><span>Today</span></button>
   <button data-go="calendar"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="3"/><path d="M4 10h16M9 3.5v4M15 3.5v4"/></svg><span>Calendar</span></button>
   <button data-go="settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span>Settings</span></button>
@@ -216,6 +266,7 @@
       <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="track" cx="60" cy="60" r="54"/><circle class="prog" id="sitRing" cx="60" cy="60" r="54"/></svg>
       <div class="time" id="sitClock">12:00</div>
     </div>
+    <div class="bwCue" id="bwCue" hidden><b id="bwWord"></b><span id="bwNum"></span></div>
     <div class="big step" id="sitStep"></div>
     <div class="small" id="sitSub"></div>
     <div class="small hint">Eyes closed · tap once to pause</div>
@@ -234,6 +285,7 @@
 <aside class="drawer" id="drawer" aria-label="Menu" hidden>
   <nav class="dNav" id="dNav">
     <button data-go="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-6.5 8 6.5V19a1.5 1.5 0 0 1-1.5 1.5H15v-5.5h-6v5.5H5.5A1.5 1.5 0 0 1 4 19z"/></svg>Home</button>
+    <button data-go="breath"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h11a2.5 2.5 0 1 0-2.5-2.5M3 14h15a2.5 2.5 0 1 1-2.5 2.5M3 19h7"/></svg>Breathwork</button>
     <button data-go="today"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.6"/><path d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M5.6 18.4l1.6-1.6M16.8 7.2l1.6-1.6"/></svg>Today</button>
     <button data-go="calendar"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="3"/><path d="M4 10h16M9 3.5v4M15 3.5v4"/></svg>Calendar</button>
     <button data-go="calendar" data-to="karma"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.3 6L12 16.4 6.6 19.4l1.3-6L3.4 9.3l6-.7z"/></svg>Karma &amp; badges</button>

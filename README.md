@@ -10,6 +10,7 @@ A daily meditation app, installable from the home screen. (It began as "Seven Po
 - `app.js`: screens, session timing, bells, breath tones, voice cues.
 - `styles.css`, `index.html`: layout.
 - `manifest.webmanifest`, `sw.js`, `icons/`: what makes it installable and work offline. `tools/icon.py` draws the icon (needs Pillow).
+- `content/breathwork.json`: the Breathwork library, 28 exercises that each run as a whole sit. Each has its `pattern` of phases as `[type, seconds, label]` (type is `in`, `out`, `hold`, `holdout`, `pump` or `free`; a `left` or `right` label also picks the nostril cue), written details, the goals it suits (`tags`), its technique (`tech`), where it works (`where`) and an optional `max` number of minutes. The Filters sheet is `BW_FILTERS` in `app.js`. They reuse the breath cues already recorded, so adding one needs no new voice.
 - `audio/`: the voice recordings (ElevenLabs, designed voice "Guru Pathik", model Eleven v4), listed in `audio/clips.json`.
 - `tools/voice.mjs`: records the spoken lines. Run it with no arguments for help.
 
