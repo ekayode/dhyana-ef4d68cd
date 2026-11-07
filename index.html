@@ -221,6 +221,9 @@
     <h3>Appearance</h3>
     <div class="seg" id="setTheme"><button data-theme="auto">Automatic</button><button data-theme="light">Light</button><button data-theme="dark">Dark</button></div>
     <p class="note" id="setThemeNote"></p>
+    <h3>Session screen</h3>
+    <div class="seg" id="setScene"><button data-scene="shuffle">Shuffle</button><button data-scene="guru">Guru</button><button data-scene="dark">Dark</button></div>
+    <p class="note" id="setSceneNote"></p>
   </section>
 
   <section class="card group">
@@ -260,7 +263,9 @@
 </nav>
 
 <div id="sit" hidden>
+  <div id="scene" aria-hidden="true"></div>
   <div id="sitLive">
+    <div id="sitArt" hidden></div>
     <div class="dial sitDial">
       <i class="glow" aria-hidden="true"></i>
       <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="track" cx="60" cy="60" r="54"/><circle class="prog" id="sitRing" cx="60" cy="60" r="54"/></svg>
@@ -296,6 +301,7 @@
   <button class="who" id="who"><span class="avatar" id="dAvatar"></span><span><b id="dName"></b><small id="dKarma"></small></span></button>
 </aside>
 
+<script src="scenes.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

@@ -7,7 +7,7 @@ let cur=0, segs=[], segI=-1, segElapsed=0, running=false, inSession=false, done=
 // mode: guided | silent. time: minutes chosen on Home per practice (0 = the practice's own length). defTime: the Settings default for every practice.
 // goal: days per week. settle: seconds after Begin (null = the content default). theme: auto (light 6 am to 6 pm, dark otherwise) | light | dark.
 // name: what the greeting calls you. welcomed: the first-open name screen has been seen.
-const prefs={voice:true,tones:true,mode:"guided",practice:"chakras",time:{},defTime:0,goal:5,settle:null,theme:"auto",name:"",welcomed:false,bwVoice:true,bwSaved:[]};
+const prefs={voice:true,tones:true,mode:"guided",practice:"chakras",time:{},defTime:0,goal:5,settle:null,theme:"auto",name:"",welcomed:false,bwVoice:true,bwSaved:[],scene:"shuffle"};
 try{const p=JSON.parse(localStorage.getItem("sp-prefs")||"{}");Object.assign(prefs,p);delete prefs.len;prefs.time=prefs.time||{}}catch(e){}
 const DAY_FROM=6,NIGHT_FROM=18; // Automatic: light from 6 am, dark from 6 pm
 function applyTheme(){const h=new Date().getHours(),t=prefs.theme==="auto"?(h>=DAY_FROM&&h<NIGHT_FROM?"light":"dark"):prefs.theme;
@@ -321,6 +321,7 @@ function drawClock(){
   if($("sitClock").textContent!==t)$("sitClock").textContent=t;
   if($("sitSub").textContent!==now)$("sitSub").textContent=now;
   $("sitRing").style.strokeDashoffset=RING*(1-l/total());
+  sceneProgress(1-l/total());
 }
 
 /* ---------- audio: bells and tones ---------- */
@@ -435,6 +436,7 @@ function enterSeg(i){segI=i;segElapsed=0;lastPhase=-1;tickAcc=0;rot={in:0,out:0}
   if(s.bell)bell(1);$("sitStep").textContent=segs.length>1?`Step ${i+1} of ${segs.length}`:s.name}
 function begin(){
   wakeAudio();loadClips(sessionClipIds());stopVoice();heldLines=[];
+  sceneStart(prefs.scene,!!bw);
   $("sit").hidden=false;$("sitLive").hidden=false;$("paused").hidden=true;$("sitStep").textContent="Settling";
   segI=-1;segElapsed=0;inSession=true;done=false;run();keepAwake();drawClock();
   if(bw?prefs.bwVoice:guided())setTimeout(()=>{if(running&&segI<0)speak(["common-settle"])},600);
@@ -674,6 +676,8 @@ function renderSettings(){
   $("setGoalNote").textContent=prefs.goal?`${prefs.goal} day${prefs.goal>1?"s":""} a week. Your progress shows on Home and in Calendar.`:"No weekly goal. Home shows your streak.";
   document.querySelectorAll("#setTheme button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.theme===prefs.theme));
   $("setThemeNote").textContent=prefs.theme==="auto"?"Light from 6 am, dark from 6 pm.":prefs.theme==="dark"?"Dark all day.":"Light all day.";
+  document.querySelectorAll("#setScene button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.scene===prefs.scene));
+  $("setSceneNote").textContent=prefs.scene==="dark"?"A black screen that gives off almost no light.":prefs.scene==="guru"?"The little guru keeps you company every session.":"A pale sky with a different drawing each session.";
   if(document.activeElement!==$("setName"))$("setName").value=prefs.name||"";
   const ps=$("pastPractice"),keep=ps.value||prefs.practice;ps.innerHTML=["chakras",...ORDER,"breath"].map(id=>`<option value="${id}">${esc(pName(id))}</option>`).join("");ps.value=keep;
 }
@@ -683,6 +687,7 @@ $("sSilent").onclick=()=>{prefs.mode="silent";savePrefs();renderSettings()};
 $("setSettle").onclick=e=>{const b=e.target.closest("[data-settle]");if(!b)return;prefs.settle=SETTLE=+b.dataset.settle;savePrefs();renderSettings()};
 $("setGoal").onclick=e=>{const b=e.target.closest("[data-goal]");if(!b)return;prefs.goal=+b.dataset.goal;savePrefs();renderSettings();showCount()};
 $("setTheme").onclick=e=>{const b=e.target.closest("[data-theme]");if(!b)return;prefs.theme=b.dataset.theme;savePrefs();applyTheme();renderSettings()};
+$("setScene").onclick=e=>{const b=e.target.closest("[data-scene]");if(!b)return;prefs.scene=b.dataset.scene;savePrefs();renderSettings()};
 $("setName").oninput=e=>{prefs.name=e.target.value.trim();savePrefs();renderMe()};
 $("clearHist").onclick=()=>{if(!confirm("Clear your practice history? Your calendar, streak, karma, badges and cycle days start again from zero."))return;
   try{for(const k of Object.keys(localStorage))if(/^sp-(hist|prog-|\d)/.test(k))localStorage.removeItem(k);localStorage.setItem("sp-hist","{}")}catch(e){}

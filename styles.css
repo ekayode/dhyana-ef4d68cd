@@ -413,3 +413,78 @@ dialog .sheet:focus,dialog:focus{outline:0}
 #sit.bw .sitDial .glow{animation:none;opacity:.9;transform:scale(.8);transition:transform 4s ease-in-out;background:radial-gradient(circle,color-mix(in srgb,var(--chakra) 65%,transparent),transparent 70%)}
 @media (prefers-reduced-motion: reduce){#sit.bw .sitDial .glow{transition:none}}
 #bwBegin{background:var(--c);position:sticky;bottom:0;box-shadow:0 8px 24px -8px rgb(0 0 0 / .35)}
+
+/* Session scenes (scenes.js): a pale, cloudy sky with a drawing. "Dark" in Settings keeps the black screen above. */
+#scene{position:absolute;inset:0;overflow:hidden;z-index:0;pointer-events:none}
+#sitLive,#paused{position:relative;z-index:1}
+#scene .sky{position:absolute;inset:-25%;background:linear-gradient(155deg,var(--k1),var(--k2),var(--k3),var(--k4),var(--k1));background-size:300% 300%;animation:skyShift 46s ease-in-out infinite alternate}
+#scene .bloom{position:absolute;width:520px;height:520px;left:calc(50% - 320px);top:10%;border-radius:50%;background:radial-gradient(circle,var(--kb),transparent 65%);animation:bloom 30s ease-in-out infinite alternate}
+#scene .bgArt{position:absolute;inset:0;width:100%;height:100%}
+#scene .cl{position:absolute;left:0;filter:drop-shadow(0 8px 12px rgba(110,130,170,.18));animation:cdrift linear infinite}
+#scene .cl:nth-child(1){top:8%;animation-duration:90s;animation-delay:-20s}
+#scene .cl:nth-child(2){top:36%;animation-duration:130s;animation-delay:-70s;opacity:.8}
+#scene .cl:nth-child(3){top:72%;animation-duration:110s;animation-delay:-40s;opacity:.9}
+#scene .shade{filter:drop-shadow(0 8px 12px rgba(110,130,170,.2))}
+@keyframes skyShift{from{background-position:0% 0%}to{background-position:100% 100%}}
+@keyframes bloom{from{transform:translate(-30px,20px) scale(.9)}to{transform:translate(40px,-30px) scale(1.12)}}
+@keyframes cdrift{from{transform:translateX(-260px)}to{transform:translateX(calc(100vw + 20px))}}
+#sit{--k1:#e9f1fb;--k2:#f7f4f0;--k3:#fdf1e6;--k4:#eaf0fa;--kb:rgba(255,236,200,.75)}
+#sit[data-scene=steps]{--k1:#e8eef8;--k2:#f6f3f8;--k3:#eef4f6;--k4:#f8f2ec;--kb:rgba(255,226,170,.7)}
+#sit[data-scene=clouds]{--k1:#d6e6f7;--k2:#eaf2fb;--k3:#f7f9fc;--k4:#e0ecf8;--kb:rgba(255,244,214,.8)}
+#sit[data-scene=pool]{--k1:#dceef2;--k2:#eef7f8;--k3:#f8fbfb;--k4:#e2f0f3;--kb:rgba(255,255,255,.8)}
+#sit[data-scene=lotus]{--k1:#f5eaf0;--k2:#fbf5f6;--k3:#f8f1f6;--k4:#f1eef8;--kb:rgba(255,226,236,.8)}
+#sit[data-scene=sunrise]{--k1:#eef0f8;--k2:#f8f1ee;--k3:#fbf4ec;--k4:#f1eff8;--kb:rgba(255,224,190,.7)}
+#sit.day{background:var(--k1);color:rgba(40,38,60,.5)}
+#sit.day .sitDial .time{color:#2c2a3a}
+#sit.day .big{color:rgba(40,38,60,.82)}
+#sit.day #sitSub{color:rgba(40,38,60,.64)}
+#sit.day .hint{color:rgba(40,38,60,.5)}
+#sit.day .sitDial .track{stroke:rgba(40,38,60,.1)}
+#sit.day .bwCue span{color:rgba(40,38,60,.55)}
+#sit.day .reward{color:#7a6440}#sit.day .reward b{color:#a07a30}
+#sit.day #paused p{color:rgba(40,38,60,.7)}
+#sit.day #paused button{background:rgba(255,255,255,.75);border-color:rgba(40,38,60,.15);color:#2c2a3a}
+/* With a drawing, the clock stands on its own under it. */
+#sit.day:not(.bw) .sitDial{width:auto;height:auto;margin:0}
+#sit.day:not(.bw) .sitDial svg,#sit.day:not(.bw) .sitDial .glow{display:none}
+#sit.day:not(.bw) .sitDial .time{position:static}
+#sitArt{margin-bottom:22px}
+#sitArt svg{display:block;width:min(300px,78vw);height:auto;max-height:40vh}
+#sit[data-scene=steps] #sitArt svg{width:min(390px,100vw);margin:0 -16px}
+#sit[data-scene=lotus] #sitArt svg{width:min(320px,84vw)}
+/* Guru */
+#sitArt .chest{transform-box:fill-box;transform-origin:50% 100%;animation:gChest 9s ease-in-out infinite}
+#sitArt .head{transform-box:fill-box;transform-origin:50% 100%;animation:gHead 9s ease-in-out infinite}
+#sitArt .halo{transform-box:fill-box;transform-origin:center;animation:gHalo 9s ease-in-out infinite}
+#sitArt .peek{opacity:0;animation:gPeek 28s linear infinite}
+#sitArt .shut{animation:gShut 28s linear infinite}
+@keyframes gChest{0%,100%{transform:scale(1,1)}45%{transform:scale(1.035,1.05)}}
+@keyframes gHead{0%,100%{transform:translateY(0)}45%{transform:translateY(-4px)}}
+@keyframes gHalo{0%,100%{transform:scale(.92);opacity:.5}45%{transform:scale(1.06);opacity:1}}
+@keyframes gPeek{0%,88%,93%,100%{opacity:0}89%,92%{opacity:1}}
+@keyframes gShut{0%,88%,93%,100%{opacity:1}89%,92%{opacity:0}}
+/* Steps: one step per seventh of the session */
+#sitArt .walker{transform:translate(calc(var(--s,0) * 42px),calc(var(--s,0) * -34px));transition:transform 2.5s ease-in-out}
+#sitArt .bob{transform-box:fill-box;transform-origin:50% 100%;animation:sBob 2.4s ease-in-out infinite}
+#sitArt .lit{animation:sLit 3s ease-in-out infinite}
+@keyframes sBob{0%,100%{transform:translateY(0) rotate(-1.5deg)}50%{transform:translateY(-3px) rotate(1.5deg)}}
+@keyframes sLit{0%,100%{opacity:.6}50%{opacity:1}}
+/* Lotus: opens across the session */
+#sitArt .p{transform-origin:0 0;transform:rotate(calc(var(--a) * (.08 + .92 * var(--p,0))));transition:transform 1s linear}
+#sitArt .lotus .glow{opacity:calc(.25 + .75 * var(--p,0))}
+/* Clouds */
+#scene .sunHalo{transform-box:fill-box;transform-origin:center;animation:gHalo 9s ease-in-out infinite}
+#scene .c1{animation:cdriftS 70s linear infinite}#scene .c2{animation:cdriftS 110s linear -40s infinite}#scene .c3{animation:cdriftS 150s linear -90s infinite}
+@keyframes cdriftS{from{transform:translateX(-300px)}to{transform:translateX(460px)}}
+/* Pool */
+#scene .ring{transform-box:fill-box;transform-origin:center;animation:pRing 15s ease-out infinite}
+#scene .r2{animation-delay:-5s}#scene .r3{animation-delay:-10s}
+#scene .pad{transform-box:fill-box;transform-origin:center;animation:pPad 15s ease-in-out infinite}#scene .pad2{animation-delay:-6s}
+@keyframes pRing{0%{transform:scale(.18);opacity:0}8%{opacity:.75}100%{transform:scale(1);opacity:0}}
+@keyframes pPad{0%,100%{transform:rotate(-3deg) translateY(0)}50%{transform:rotate(3deg) translateY(4px)}}
+/* Sunrise: the sun clears the mountains by the end */
+#scene .sun{transform:translateY(calc(60px - 200px * var(--p,0)));transition:transform 1s linear}
+#scene .dawn{opacity:calc(.35 + .65 * var(--p,0))}
+#scene .bird{animation:sBird 40s linear infinite}
+@keyframes sBird{from{transform:translate(-60px,20px)}to{transform:translate(440px,-40px)}}
+@media (prefers-reduced-motion: reduce){#scene *,#sitArt *{animation:none!important}}
